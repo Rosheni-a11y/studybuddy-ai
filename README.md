@@ -2,6 +2,9 @@
 
 A RAG-powered study assistant that lets you upload lecture notes (PDFs) and ask questions about them. Instead of answering from general knowledge, it searches through YOUR notes and answers only from what it finds — so every answer matches your actual syllabus.
 
+<img width="955" height="413" alt="image" src="https://github.com/user-attachments/assets/ab118f52-2d35-4fc1-901f-a94d3e01a3a9" />
+
+
 ## How it works
 
 1. You upload a lecture PDF
@@ -65,7 +68,7 @@ Open `http://localhost:5173` in your browser.
 - `POST /clear` — delete all stored chunks
 
 ## Project structure
-
+```
 studybuddy-ai/
 ├── backend/
 │   ├── app.py              # Flask API server
@@ -77,6 +80,7 @@ studybuddy-ai/
 │       ├── App.jsx          # Chat UI
 │       └── App.css          # Styling
 └── README.md
+```
 
 ## What I learned building this
 
