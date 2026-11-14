@@ -8,7 +8,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
 from langchain_core.embeddings import Embeddings
-import google.generativeai as genai
+from groq import Groq
 
 CHROMA_PATH = "./chroma_db"
 
@@ -26,7 +26,7 @@ class ChromaDefaultEmbeddings(Embeddings):
 
 _embeddings = None
 _vectorstore = None
-_model = None
+_client = None
 
 
 def _get_embeddings():
@@ -47,12 +47,11 @@ def _get_vectorstore():
     return _vectorstore
 
 
-def _get_model():
-    global _model
-    if _model is None:
-        genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-        _model = genai.GenerativeModel("gemini-3.8-flash")
-    return _model
+def _get_client():
+    global _client
+    if _client is None:
+        _client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+    return _client
 
 
 def upload_pdf(file_path: str, original_filename: str | None = None) -> dict:
@@ -116,12 +115,13 @@ QUESTION: {question}
 
 ANSWER:"""
 
-    response = _get_model().generate_content(
-        prompt,
-        generation_config=genai.types.GenerationConfig(temperature=0.3),
+    response = _get_client().chat.completions.create(
+        model="qwen/qwen3.8-27b",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.3,
     )
 
-    answer = response.text
+    answer = response.choices[0].message.content
 
     return {
         "answer": answer,

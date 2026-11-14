@@ -2,7 +2,7 @@ flask
 flask-cors
 python-dotenv
 gunicorn
-google-generativeai
+groq
 langchain-community
 langchain-text-splitters
 langchain-chroma
