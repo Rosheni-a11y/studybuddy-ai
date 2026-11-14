@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000'
+const API_BASE = 'https://studybuddy-ai-16zg.onrender.com'
 
 const SUGGESTIONS = [
   { label: 'Summarize key concepts', icon: 'sparkles' },
