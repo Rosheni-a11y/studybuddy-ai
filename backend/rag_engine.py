@@ -1,15 +1,32 @@
 import os
+import requests as http_requests
 from dotenv import load_dotenv
 
 load_dotenv()
 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
+from langchain_core.embeddings import Embeddings
 from groq import Groq
 
 CHROMA_PATH = "./chroma_db"
+HF_API_URL = "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2"
+
+
+class HFInferenceEmbeddings(Embeddings):
+    def __init__(self, api_key: str | None = None):
+        self.api_key = api_key or os.getenv("HF_API_KEY", "")
+        self.headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        response = http_requests.post(HF_API_URL, headers=self.headers, json={"inputs": texts, "options": {"wait_for_model": True}})
+        response.raise_for_status()
+        return response.json()
+
+    def embed_query(self, text: str) -> list[float]:
+        return self.embed_documents([text])[0]
+
 
 _embeddings = None
 _vectorstore = None
@@ -19,10 +36,7 @@ _client = None
 def _get_embeddings():
     global _embeddings
     if _embeddings is None:
-        _embeddings = HuggingFaceEmbeddings(
-            model_name="all-MiniLM-L6-v2",
-            model_kwargs={"device": "cpu"},
-        )
+        _embeddings = HFInferenceEmbeddings()
     return _embeddings
 
 
