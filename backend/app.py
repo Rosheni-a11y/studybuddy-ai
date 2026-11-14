@@ -5,7 +5,8 @@ import os
 from rag_engine import upload_pdf, ask_question, get_stats, clear_database
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS"], "allow_headers": ["Content-Type"]}})
+
 
 
 @app.route('/upload', methods=['POST'])
@@ -34,8 +35,13 @@ def ask():
     if not data or 'question' not in data:
         return jsonify({'error': 'No question provided'}), 400
 
-    result = ask_question(data['question'])
-    return jsonify(result)
+
+    try:
+        result = ask_question(data['question'])
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 
 @app.route('/stats', methods=['GET'])
