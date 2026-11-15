@@ -3,7 +3,7 @@ import './App.css'
 
 const API_BASE = window.location.hostname === 'localhost'
   ? 'http://127.0.0.1:5000'
-  : 'https://studybuddy-ai-16zg.onrender.com'
+  : 'https://rosheni123-studybuddy-ai.hf.space'
 
 const SUGGESTIONS = [
   { label: 'Summarize key concepts', icon: 'sparkles' },
