@@ -2,7 +2,8 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import tempfile
 import os
-from rag_engine import upload_pdf, ask_question, get_stats, clear_database
+from rag_engine import upload_pdf, get_stats, clear_database
+from agent import agent_respond
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS"], "allow_headers": ["Content-Type"]}})
@@ -37,7 +38,7 @@ def ask():
 
 
     try:
-        result = ask_question(data['question'])
+        result = agent_respond(data['question'])
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500

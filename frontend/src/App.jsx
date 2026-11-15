@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
 
-const API_BASE = 'https://studybuddy-ai-16zg.onrender.com'
+const API_BASE = window.location.hostname === 'localhost'
+  ? 'http://127.0.0.1:5000'
+  : 'https://studybuddy-ai-16zg.onrender.com'
 
 const SUGGESTIONS = [
   { label: 'Summarize key concepts', icon: 'sparkles' },
