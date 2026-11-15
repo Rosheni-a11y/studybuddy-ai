@@ -285,7 +285,7 @@ function App() {
     setIsAsking(true)
 
     try {
-      const res = await fetch(`${API_BASE}/ask`, {
+      const res = await fetch(`${API_BASE}/api/ask`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: text }),
@@ -342,7 +342,7 @@ function App() {
     formData.append('file', file)
 
     try {
-      const res = await fetch(`${API_BASE}/upload`, {
+      const res = await fetch(`${API_BASE}/api/upload`, {
         method: 'POST',
         body: formData,
       })
