@@ -1,0 +1,344 @@
+{
+  "summary": {
+    "total_questions": 20,
+    "avg_recall": 0.978,
+    "perfect_recall": 18,
+    "partial_recall": 2,
+    "zero_recall": 0,
+    "k": 4
+  },
+  "results": [
+    {
+      "question": "What programming language does Flutter use?",
+      "expected": [
+        "Dart"
+      ],
+      "found": [
+        "dart"
+      ],
+      "missed": [],
+      "recall": 1.0,
+      "chunks_retrieved": 4
+    },
+    {
+      "question": "What are the four ways to build a mobile app?",
+      "expected": [
+        "native",
+        "cross-platform",
+        "hybrid",
+        "PWA"
+      ],
+      "found": [
+        "native",
+        "cross-platform",
+        "hybrid",
+        "pwa"
+      ],
+      "missed": [],
+      "recall": 1.0,
+      "chunks_retrieved": 4
+    },
+    {
+      "question": "What is Flutter?",
+      "expected": [
+        "Google",
+        "open-source",
+        "UI toolkit",
+        "natively-compiled"
+      ],
+      "found": [
+        "google",
+        "open-source",
+        "ui toolkit",
+        "natively-compiled"
+      ],
+      "missed": [],
+      "recall": 1.0,
+      "chunks_retrieved": 4
+    },
+    {
+      "question": "What is the difference between hot reload and hot restart?",
+      "expected": [
+        "state",
+        "keeps",
+        "restarts",
+        "lost"
+      ],
+      "found": [
+        "state",
+        "keeps",
+        "restarts",
+        "lost"
+      ],
+      "missed": [],
+      "recall": 1.0,
+      "chunks_retrieved": 4
+    },
+    {
+      "question": "What are the three layers of Flutter architecture?",
+      "expected": [
+        "Framework",
+        "Engine",
+        "Embedder"
+      ],
+      "found": [
+        "framework",
+        "engine",
+        "embedder"
+      ],
+      "missed": [],
+      "recall": 1.0,
+      "chunks_retrieved": 4
+    },
+    {
+      "question": "What is the difference between StatelessWidget and StatefulWidget?",
+      "expected": [
+        "changes",
+        "mutable",
+        "setState",
+        "immutable"
+      ],
+      "found": [
+        "changes",
+        "mutable",
+        "setstate"
+      ],
+      "missed": [
+        "immutable"
+      ],
+      "recall": 0.75,
+      "chunks_retrieved": 4
+    },
+    {
+      "question": "What does setState do in Flutter?",
+      "expected": [
+        "rebuild",
+        "update",
+        "UI"
+      ],
+      "found": [
+        "rebuild",
+        "update",
+        "ui"
+      ],
+      "missed": [],
+      "recall": 1.0,
+      "chunks_retrieved": 4
+    },
+    {
+      "question": "What is the purpose of Navigator.push in Flutter?",
+      "expected": [
+        "screen",
+        "forward",
+        "new",
+        "route"
+      ],
+      "found": [
+        "screen",
+        "forward",
+        "new",
+        "route"
+      ],
+      "missed": [],
+      "recall": 1.0,
+      "chunks_retrieved": 4
+    },
+    {
+      "question": "What is the entry point file for a Flutter app?",
+      "expected": [
+        "lib/main.dart",
+        "main.dart",
+        "runApp"
+      ],
+      "found": [
+        "lib/main.dart",
+        "main.dart",
+        "runapp"
+      ],
+      "missed": [],
+      "recall": 1.0,
+      "chunks_retrieved": 4
+    },
+    {
+      "question": "What widget arranges children horizontally in Flutter?",
+      "expected": [
+        "Row"
+      ],
+      "found": [
+        "row"
+      ],
+      "missed": [],
+      "recall": 1.0,
+      "chunks_retrieved": 4
+    },
+    {
+      "question": "What widget arranges children vertically in Flutter?",
+      "expected": [
+        "Column"
+      ],
+      "found": [
+        "column"
+      ],
+      "missed": [],
+      "recall": 1.0,
+      "chunks_retrieved": 4
+    },
+    {
+      "question": "What is null safety in Dart?",
+      "expected": [
+        "non-null",
+        "default",
+        "?",
+        "null"
+      ],
+      "found": [
+        "non-null",
+        "default",
+        "?",
+        "null"
+      ],
+      "missed": [],
+      "recall": 1.0,
+      "chunks_retrieved": 4
+    },
+    {
+      "question": "What does the Expanded widget do?",
+      "expected": [
+        "remaining",
+        "space",
+        "Row",
+        "Column",
+        "fill"
+      ],
+      "found": [
+        "remaining",
+        "space",
+        "row",
+        "column",
+        "fill"
+      ],
+      "missed": [],
+      "recall": 1.0,
+      "chunks_retrieved": 4
+    },
+    {
+      "question": "What is cross-platform development?",
+      "expected": [
+        "single codebase",
+        "multiple platforms",
+        "Android",
+        "iOS"
+      ],
+      "found": [
+        "single codebase",
+        "multiple platforms",
+        "android",
+        "ios"
+      ],
+      "missed": [],
+      "recall": 1.0,
+      "chunks_retrieved": 4
+    },
+    {
+      "question": "What percentage of code is typically shared in a Flutter app?",
+      "expected": [
+        "90"
+      ],
+      "found": [
+        "90"
+      ],
+      "missed": [],
+      "recall": 1.0,
+      "chunks_retrieved": 4
+    },
+    {
+      "question": "What is the purpose of pubspec.yaml in a Flutter project?",
+      "expected": [
+        "dependencies",
+        "assets",
+        "fonts",
+        "manifest"
+      ],
+      "found": [
+        "dependencies",
+        "assets",
+        "fonts",
+        "manifest"
+      ],
+      "missed": [],
+      "recall": 1.0,
+      "chunks_retrieved": 4
+    },
+    {
+      "question": "What are the benefits of using a mobile framework?",
+      "expected": [
+        "reusable",
+        "faster",
+        "community",
+        "cross-platform"
+      ],
+      "found": [
+        "reusable",
+        "faster",
+        "community",
+        "cross-platform"
+      ],
+      "missed": [],
+      "recall": 1.0,
+      "chunks_retrieved": 4
+    },
+    {
+      "question": "What is layered mobile architecture?",
+      "expected": [
+        "UI",
+        "service",
+        "repository",
+        "model",
+        "layer"
+      ],
+      "found": [
+        "ui",
+        "service",
+        "repository",
+        "model",
+        "layer"
+      ],
+      "missed": [],
+      "recall": 1.0,
+      "chunks_retrieved": 4
+    },
+    {
+      "question": "What command is used to create a new Flutter project?",
+      "expected": [
+        "flutter create"
+      ],
+      "found": [
+        "flutter create"
+      ],
+      "missed": [],
+      "recall": 1.0,
+      "chunks_retrieved": 4
+    },
+    {
+      "question": "What are the common beginner mistakes in Flutter?",
+      "expected": [
+        "setState",
+        "overflow",
+        "Stateful",
+        "main.dart",
+        "null"
+      ],
+      "found": [
+        "setstate",
+        "overflow",
+        "stateful",
+        "null"
+      ],
+      "missed": [
+        "main.dart"
+      ],
+      "recall": 0.8,
+      "chunks_retrieved": 4
+    }
+  ]
+}

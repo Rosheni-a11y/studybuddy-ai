@@ -1,0 +1,102 @@
+[
+  {
+    "question": "What programming language does Flutter use?",
+    "expected_keywords": ["Dart"],
+    "page": 19
+  },
+  {
+    "question": "What are the four ways to build a mobile app?",
+    "expected_keywords": ["native", "cross-platform", "hybrid", "PWA"],
+    "page": 8
+  },
+  {
+    "question": "What is Flutter?",
+    "expected_keywords": ["Google", "open-source", "UI toolkit", "natively-compiled"],
+    "page": 19
+  },
+  {
+    "question": "What is the difference between hot reload and hot restart?",
+    "expected_keywords": ["state", "keeps", "restarts", "lost"],
+    "page": 21
+  },
+  {
+    "question": "What are the three layers of Flutter architecture?",
+    "expected_keywords": ["Framework", "Engine", "Embedder"],
+    "page": 20
+  },
+  {
+    "question": "What is the difference between StatelessWidget and StatefulWidget?",
+    "expected_keywords": ["changes", "mutable", "setState", "immutable"],
+    "page": 32
+  },
+  {
+    "question": "What does setState do in Flutter?",
+    "expected_keywords": ["rebuild", "update", "UI"],
+    "page": 41
+  },
+  {
+    "question": "What is the purpose of Navigator.push in Flutter?",
+    "expected_keywords": ["screen", "forward", "new", "route"],
+    "page": 43
+  },
+  {
+    "question": "What is the entry point file for a Flutter app?",
+    "expected_keywords": ["lib/main.dart", "main.dart", "runApp"],
+    "page": 30
+  },
+  {
+    "question": "What widget arranges children horizontally in Flutter?",
+    "expected_keywords": ["Row"],
+    "page": 35
+  },
+  {
+    "question": "What widget arranges children vertically in Flutter?",
+    "expected_keywords": ["Column"],
+    "page": 35
+  },
+  {
+    "question": "What is null safety in Dart?",
+    "expected_keywords": ["non-null", "default", "?", "null"],
+    "page": 26
+  },
+  {
+    "question": "What does the Expanded widget do?",
+    "expected_keywords": ["remaining", "space", "Row", "Column", "fill"],
+    "page": 37
+  },
+  {
+    "question": "What is cross-platform development?",
+    "expected_keywords": ["single codebase", "multiple platforms", "Android", "iOS"],
+    "page": 13
+  },
+  {
+    "question": "What percentage of code is typically shared in a Flutter app?",
+    "expected_keywords": ["90"],
+    "page": 13
+  },
+  {
+    "question": "What is the purpose of pubspec.yaml in a Flutter project?",
+    "expected_keywords": ["dependencies", "assets", "fonts", "manifest"],
+    "page": 30
+  },
+  {
+    "question": "What are the benefits of using a mobile framework?",
+    "expected_keywords": ["reusable", "faster", "community", "cross-platform"],
+    "page": 11
+  },
+  {
+    "question": "What is layered mobile architecture?",
+    "expected_keywords": ["UI", "service", "repository", "model", "layer"],
+    "page": 48
+  },
+  {
+    "question": "What command is used to create a new Flutter project?",
+    "expected_keywords": ["flutter create"],
+    "page": 29
+  },
+  {
+    "question": "What are the common beginner mistakes in Flutter?",
+    "expected_keywords": ["setState", "overflow", "Stateful", "main.dart", "null"],
+    "page": 55
+  }
+]
