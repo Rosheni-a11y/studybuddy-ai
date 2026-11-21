@@ -1,47 +1,44 @@
 # StudyBuddy AI 📚
 
-An agentic RAG-powered study assistant. Upload your lecture PDFs, ask questions, get quizzed, generate flashcards, or get summaries — all grounded in YOUR notes, not general knowledge.
+An agentic RAG-powered study assistant. Upload your lecture PDFs, ask questions, get quizzed, generate flashcards, or get summaries. All grounded in YOUR notes, not general knowledge.
 
 🔗 **Live Demo:** [huggingface.co/spaces/Rosheni123/studybuddy-ai](https://huggingface.co/spaces/Rosheni123/studybuddy-ai)
 
 ## Features
 
-- **Ask Questions** — get answers sourced only from your uploaded notes
-- **Quiz Generation** — MCQs (theory, practical scenarios, or mixed) from your notes
-- **Summarize** — get organized revision notes from any chapter/topic
-- **Flashcards** — term → definition pairs for quick revision
-- **Explain Like a Kid** — adapts explanation style to how you ask
-- **Chat History** — agent remembers context within a conversation
-- **Multi-PDF Support** — upload multiple PDFs, agent knows which files are loaded
+- **Ask Questions** get answers sourced only from your uploaded notes
+- **Quiz Generation** MCQs (theory, practical scenarios, or mixed) from your notes
+- **Summarize** get organized revision notes from any chapter or topic
+- **Flashcards** term and definition pairs for quick revision
+- **Explain Like a Kid** adapts explanation style to how you ask
+- **Chat History** agent remembers context within a conversation
+- **Multi-PDF Support** upload multiple PDFs, agent knows which files are loaded
 
-## How it works
+## How It Works
 
-1. Upload a lecture PDF → split into ~500-character chunks
+1. Upload a lecture PDF, it gets split into ~500 character chunks
 2. Each chunk is embedded using all-MiniLM-L6-v2 (runs on CPU)
 3. Vectors stored in ChromaDB
 4. When you ask something, your question becomes a vector
 5. ChromaDB finds the most similar chunks (semantic search)
-6. An **agentic layer** decides which tool to call (ask/quiz/summarize/flashcards/stats/clear)
-7. The LLM generates a response using ONLY your notes — no hallucination
+6. An **agentic layer** decides which tool to call (ask, quiz, summarize, flashcards, stats, clear)
+7. The LLM generates a response using ONLY your notes
 
 ## Architecture
 
 ```
 User Message
-    ↓
+      |
 Agent (LLM with tool calling)
-    ↓ decides tool
-┌─────────┬──────────┬───────────┬────────────┬───────┬───────┐
-│  ask    │  quiz    │ summarize │ flashcards │ stats │ clear │
-└────┬────┴────┬─────┴─────┬─────┴─────┬──────┴───────┴───────┘
-     │         │           │           │
-     └─────────┴───────────┴───────────┘
-                    ↓
-            ChromaDB (RAG retrieval)
-                    ↓
-            Groq LLM (answer generation)
-                    ↓
-              Response to user
+      | decides tool
+      |
+ ask | quiz | summarize | flashcards | stats | clear
+      |
+ChromaDB (RAG retrieval)
+      |
+Groq LLM (answer generation)
+      |
+Response to user
 ```
 
 ## Tech Stack
@@ -52,7 +49,7 @@ Agent (LLM with tool calling)
 | **Agentic Layer** | LLM tool calling with keyword fallback |
 | **RAG Pipeline** | LangChain, ChromaDB |
 | **Embeddings** | all-MiniLM-L6-v2 (ONNX, CPU) |
-| **LLM** | Qwen 3.8-27B via Groq API |
+| **LLM** | Qwen 3.8 27B via Groq API |
 | **Deployment** | Hugging Face Spaces (ZeroGPU) |
 
 ## Evaluation
@@ -126,7 +123,7 @@ python run_eval.py
 
 ## What I Learned
 
-- RAG (Retrieval Augmented Generation) end-to-end pipeline
+- RAG (Retrieval Augmented Generation) end to end pipeline
 - Document chunking strategies and why chunk size/overlap matters
 - Vector embeddings and similarity search
 - Building an agentic layer with LLM tool calling
