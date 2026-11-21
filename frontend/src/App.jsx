@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
-
-const API_BASE = window.location.hostname === 'localhost'
-  ? 'http://127.0.0.1:5000'
-  : 'https://rosheni123-studybuddy-ai.hf.space'
+import { askQuestion, uploadPdf, getStats, clearNotes } from './api'
 
 const SUGGESTIONS = [
   { label: 'Summarize key concepts', icon: 'sparkles' },
@@ -248,6 +245,7 @@ function App() {
   const [files, setFiles] = useState([])
   const [uploading, setUploading] = useState(false)
   const [toast, setToast] = useState(null)
+  const [statsText, setStatsText] = useState('')
   const fileInputRef = useRef(null)
   const scrollRef = useRef(null)
   const textareaRef = useRef(null)
@@ -285,25 +283,7 @@ function App() {
     setIsAsking(true)
 
     try {
-      const res = await fetch(`${API_BASE}/api/ask`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: text }),
-      })
-
-      let data = null
-      try {
-        data = await res.json()
-      } catch {
-        // backend returned non-JSON (e.g. Flask HTML error page)
-      }
-
-      if (!res.ok) {
-        throw new Error(
-          (data && data.error) ||
-            `Backend error ${res.status}. Check the Flask terminal for the traceback.`,
-        )
-      }
+      const data = await askQuestion(text)
 
       setMessages((m) => [
         ...m,
@@ -321,7 +301,7 @@ function App() {
         {
           role: 'ai',
           content: isNetwork
-            ? "I couldn't reach the StudyBuddy server. Make sure the backend is running on port 5000."
+            ? "I couldn't reach the StudyBuddy server. If testing locally, make sure Flask is running on port 5000."
             : err.message,
           error: true,
           id: Date.now() + 1,
@@ -338,16 +318,8 @@ function App() {
     if (!file) return
 
     setUploading(true)
-    const formData = new FormData()
-    formData.append('file', file)
-
     try {
-      const res = await fetch(`${API_BASE}/api/upload`, {
-        method: 'POST',
-        body: formData,
-      })
-      const data = await res.json()
-      if (!res.ok || data.error) throw new Error(data.error || 'Upload failed')
+      const data = await uploadPdf(file)
 
       setFiles((f) => [
         ...f,
@@ -358,6 +330,26 @@ function App() {
       setToast({ kind: 'error', text: err.message })
     } finally {
       setUploading(false)
+    }
+  }
+
+  const handleStats = async () => {
+    try {
+      const data = await getStats()
+      setStatsText(data.message || JSON.stringify(data))
+    } catch (err) {
+      setStatsText('Error: ' + err.message)
+    }
+  }
+
+  const handleClear = async () => {
+    try {
+      const data = await clearNotes()
+      setFiles([])
+      setStatsText(data.message || 'Cleared')
+      setToast({ kind: 'success', text: 'Notes cleared' })
+    } catch (err) {
+      setToast({ kind: 'error', text: err.message })
     }
   }
 
@@ -383,14 +375,13 @@ function App() {
               <span>Your personal study assistant</span>
             </div>
           </div>
+        </div>
+      </header>
 
-          <div className="header-actions">
-            <div className="file-badge" title={`${fileCount} file${fileCount === 1 ? '' : 's'} indexed`}>
-              <Icon name="file" size={14} />
-              <span>
-                {fileCount} file{fileCount === 1 ? '' : 's'}
-              </span>
-            </div>
+      <div className="main-layout">
+        <aside className="sidebar">
+          <div className="sidebar-section">
+            <h3 className="sidebar-title">Upload Notes</h3>
             <button
               type="button"
               className="upload-btn"
@@ -414,74 +405,97 @@ function App() {
               hidden
               onChange={handleFileChange}
             />
+            {files.length > 0 && (
+              <div className="file-list">
+                {files.map((f, i) => (
+                  <div key={i} className="file-item">
+                    <Icon name="file" size={14} />
+                    <span>{f.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      </header>
 
-      <main className="chat" ref={scrollRef}>
-        <div className="chat-inner">
-          {showEmpty ? (
-            <EmptyState onPick={(t) => handleSend(t)} />
-          ) : (
-            <>
-              {messages.map((m) => (
-                <Message key={m.id} msg={m} />
-              ))}
-              {isAsking && <TypingDots />}
-            </>
-          )}
-        </div>
-      </main>
-
-      <footer className="composer">
-        <div className="composer-inner">
-          {!showEmpty && (
-            <div className="chips">
-              {SUGGESTIONS.map((s) => (
-                <button
-                  key={s.label}
-                  type="button"
-                  className="chip"
-                  onClick={() => handleSend(s.label)}
-                  disabled={isAsking}
-                >
-                  <Icon name={s.icon} size={14} />
-                  <span>{s.label}</span>
-                </button>
-              ))}
+          <div className="sidebar-section">
+            <h3 className="sidebar-title">Database</h3>
+            {statsText && <p className="stats-text">{statsText}</p>}
+            <div className="sidebar-buttons">
+              <button type="button" className="stats-btn" onClick={handleStats}>
+                Stats
+              </button>
+              <button type="button" className="clear-btn" onClick={handleClear}>
+                Clear
+              </button>
             </div>
-          )}
-
-          <div className="input-bar">
-            <textarea
-              ref={textareaRef}
-              rows={1}
-              placeholder={
-                fileCount === 0
-                  ? 'Upload a PDF first, then ask anything…'
-                  : 'Ask a question about your notes…'
-              }
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={onKeyDown}
-            />
-            <button
-              type="button"
-              className="send-btn"
-              onClick={() => handleSend()}
-              disabled={!input.trim() || isAsking}
-              aria-label="Send message"
-            >
-              <Icon name="send" size={18} />
-            </button>
           </div>
-          <p className="hint">
-            StudyBuddy answers only from your uploaded notes. Press{' '}
-            <kbd>Enter</kbd> to send, <kbd>Shift</kbd>+<kbd>Enter</kbd> for a
-            new line.
-          </p>
+        </aside>
+
+        <div className="chat-column">
+          <main className="chat" ref={scrollRef}>
+            <div className="chat-inner">
+              {showEmpty ? (
+                <EmptyState onPick={(t) => handleSend(t)} />
+              ) : (
+                <>
+                  {messages.map((m) => (
+                    <Message key={m.id} msg={m} />
+                  ))}
+                  {isAsking && <TypingDots />}
+                </>
+              )}
+            </div>
+          </main>
+
+          <footer className="composer">
+            <div className="composer-inner">
+              {!showEmpty && (
+                <div className="chips">
+                  {SUGGESTIONS.map((s) => (
+                    <button
+                      key={s.label}
+                      type="button"
+                      className="chip"
+                      onClick={() => handleSend(s.label)}
+                      disabled={isAsking}
+                    >
+                      <Icon name={s.icon} size={14} />
+                      <span>{s.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="input-bar">
+                <textarea
+                  ref={textareaRef}
+                  rows={1}
+                  placeholder={
+                    fileCount === 0
+                      ? 'Upload a PDF first, then ask anything…'
+                      : 'Ask a question about your notes…'
+                  }
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={onKeyDown}
+                />
+                <button
+                  type="button"
+                  className="send-btn"
+                  onClick={() => handleSend()}
+                  disabled={!input.trim() || isAsking}
+                  aria-label="Send message"
+                >
+                  <Icon name="send" size={18} />
+                </button>
+              </div>
+              <p className="hint">
+                Press <kbd>Enter</kbd> to send, <kbd>Shift</kbd>+<kbd>Enter</kbd> for a new line.
+              </p>
+            </div>
+          </footer>
         </div>
-      </footer>
+      </div>
 
       {toast && (
         <div className={`toast toast-${toast.kind}`} role="status">
