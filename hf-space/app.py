@@ -29,7 +29,7 @@ theme = gr.themes.Soft(
 )
 
 custom_css = """
-.gradio-container { max-width: 1100px !important; margin: 0 auto !important; }
+.gradio-container { max-width: 1400px !important; margin: 0 auto !important; padding: 0 20px !important; }
 
 .header-bar {
     text-align: center;
@@ -42,7 +42,8 @@ custom_css = """
 .header-bar p { color: rgba(255,255,255,0.9); font-size: 0.88rem; margin: 0; }
 
 .gradio-container .row { flex-wrap: nowrap !important; }
-.gradio-container .row > .column:first-child { max-width: 320px !important; min-width: 280px !important; }
+.gradio-container .row > .column:first-child { max-width: 350px !important; min-width: 300px !important; }
+.gradio-container .row { gap: 24px !important; }
 footer { display: none !important; }
 """
 
@@ -99,7 +100,7 @@ with gr.Blocks(title="StudyBuddy AI") as demo:
             stats_btn.click(stats_fn, outputs=stats_output)
             clear_btn.click(clear_fn, outputs=[file_input, stats_output])
 
-        with gr.Column(scale=2):
+        with gr.Column(scale=3):
             gr.Markdown("#### 💬 Chat with your Notes")
             chatbot = gr.ChatInterface(chat_fn)
 
