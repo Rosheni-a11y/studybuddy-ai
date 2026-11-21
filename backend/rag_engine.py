@@ -150,3 +150,13 @@ def clear_database() -> dict:
         "deleted": len(all_ids),
         "message": f"Cleared {len(all_ids)} chunks from the database.",
     }
+
+
+def _get_uplaoded_sources():
+    collection = _get_vectorstore()._collection
+    result = collection.get(include=["metadatas"])
+    sources = set()
+    for meta in result.get("metadatas", []):
+        if meta and "source_file" in meta:
+            sources.add(meta["source_file"])
+    return list(sources)

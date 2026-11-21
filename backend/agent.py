@@ -28,7 +28,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "quiz",
-            "description": "Generate a multiple-choice quiz from uploaded notes. Use when the student says 'quiz me' or wants to test themselves.",
+            "description": "Generate a multiple-choice quiz from uploaded notes. Use whenever the student says 'quiz me', 'test me', 'MCQ', or wants practice questions. If no specific topic is given, use 'general'. NEVER ask the student to clarify the topic.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -116,7 +116,7 @@ def _detect_intent(message: str) -> tuple[str, dict]:
     return "ask", {"question": message}
 
 
-def agent_respond(user_message: str) -> dict:
+def agent_respond(user_message: str, history: list = None) -> dict:
     """Main entry point. LLM decides which tool to use, executes it, returns final answer."""
 
     client = _get_client()
@@ -124,16 +124,19 @@ def agent_respond(user_message: str) -> dict:
     try:
         response = client.chat.completions.create(
             model="qwen/qwen3.8-27b",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are StudyBuddy AI, a helpful study assistant. Use the available tools to help students. For factual questions, use 'ask'. When students want a quiz, use 'quiz'. For database info, use 'stats'. Only use 'clear' if explicitly requested.",
-                },
-                {"role": "user", "content": user_message},
-            ],
-            tools=TOOLS,
-            tool_choice="auto",
-            temperature=0.3,
+    if history:
+              for msg in history[-6:]:
+              
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are StudyBuddy AI, a helpful study assistant. Use the available tools to help students. For factual questions, use 'ask'. When students want a quiz, use 'quiz'. For database info, use 'stats'. Only use 'clear' if explicitly requested.",
+                    },
+                    {"role": "user", "content": user_message},
+                ],
+                tools=TOOLS,
+                tool_choice="auto",
+                temperature=0.3,
         )
 
         msg = response.choices[0].message
