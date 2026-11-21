@@ -12,38 +12,94 @@ def _dummy_gpu():
 
 
 theme = gr.themes.Soft(
-    primary_hue="violet",
-    secondary_hue="gray",
-    neutral_hue="gray",
-    font=gr.themes.GoogleFont("Inter"),
+    primary_hue="indigo",
+    secondary_hue="slate",
+    neutral_hue="slate",
+    radius_size="lg",
+    spacing_size="md",
+    font=[gr.themes.GoogleFont("Inter"), "ui-sans-serif", "sans-serif"],
 ).set(
-    body_background_fill="*neutral_50",
-    block_background_fill="white",
+    body_background_fill="#0f1117",
+    body_background_fill_dark="#0f1117",
+    block_background_fill="#1a1b26",
+    block_background_fill_dark="#1a1b26",
     block_border_width="1px",
-    block_border_color="*neutral_200",
-    block_shadow="0 1px 3px rgba(0,0,0,0.08)",
+    block_border_color="#2a2b3d",
+    block_border_color_dark="#2a2b3d",
+    block_shadow="0 4px 16px rgba(0,0,0,0.3)",
+    block_shadow_dark="0 4px 16px rgba(0,0,0,0.3)",
     block_title_text_weight="600",
-    input_background_fill="white",
-    button_primary_background_fill="*primary_500",
+    input_background_fill="#1e1f2e",
+    input_background_fill_dark="#1e1f2e",
+    input_border_color="#2a2b3d",
+    input_border_color_dark="#2a2b3d",
+    button_primary_background_fill="linear-gradient(135deg, #6366f1, #8b5cf6)",
+    button_primary_background_fill_dark="linear-gradient(135deg, #6366f1, #8b5cf6)",
+    button_primary_background_fill_hover="linear-gradient(135deg, #818cf8, #a78bfa)",
+    button_primary_background_fill_hover_dark="linear-gradient(135deg, #818cf8, #a78bfa)",
     button_primary_text_color="white",
+    button_primary_shadow="0 2px 8px rgba(99,102,241,0.3)",
+    button_secondary_background_fill="#1e1f2e",
+    button_secondary_background_fill_dark="#1e1f2e",
+    button_secondary_text_color="#a5b4fc",
+    button_secondary_text_color_dark="#a5b4fc",
+    button_secondary_border_color="#2a2b3d",
+    button_secondary_border_color_dark="#2a2b3d",
+    body_text_color="#e2e8f0",
+    body_text_color_dark="#e2e8f0",
+    body_text_color_subdued="#94a3b8",
+    body_text_color_subdued_dark="#94a3b8",
+    color_accent_soft="#1e1b4b",
+    color_accent_soft_dark="#1e1b4b",
 )
 
 custom_css = """
-.gradio-container { max-width: 1400px !important; margin: 0 auto !important; padding: 0 20px !important; }
+.gradio-container { max-width: 100% !important; padding: 0 24px !important; }
 
 .header-bar {
     text-align: center;
-    padding: 24px 16px 16px;
-    background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 60%, #c4b5fd 100%);
-    border-radius: 16px;
-    margin-bottom: 16px;
+    padding: 32px 20px 24px;
+    background: linear-gradient(135deg, #312e81 0%, #4f46e5 40%, #7c3aed 70%, #a78bfa 100%);
+    border-radius: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(79, 70, 229, 0.3);
 }
-.header-bar h1 { font-size: 1.7rem; font-weight: 700; color: white; margin: 0 0 4px 0; }
-.header-bar p { color: rgba(255,255,255,0.9); font-size: 0.88rem; margin: 0; }
+.header-bar h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: white;
+    margin: 0 0 6px 0;
+    letter-spacing: -0.5px;
+}
+.header-bar p {
+    color: rgba(255,255,255,0.85);
+    font-size: 0.92rem;
+    margin: 0;
+    font-weight: 400;
+}
 
-.gradio-container .row { flex-wrap: nowrap !important; }
-.gradio-container .row > .column:first-child { max-width: 350px !important; min-width: 300px !important; }
-.gradio-container .row { gap: 24px !important; }
+.gradio-container .row { flex-wrap: nowrap !important; gap: 20px !important; }
+.gradio-container .row > .column:first-child { max-width: 340px !important; min-width: 300px !important; }
+
+h4, .markdown h4 { color: #c7d2fe !important; font-weight: 600 !important; }
+
+button.secondary {
+    transition: all 0.2s ease !important;
+}
+button.secondary:hover {
+    background: #252640 !important;
+    border-color: #6366f1 !important;
+}
+button.stop {
+    background: #2a1215 !important;
+    border-color: #7f1d1d !important;
+    color: #fca5a5 !important;
+}
+button.stop:hover {
+    background: #3b1419 !important;
+    border-color: #991b1b !important;
+}
+
 footer { display: none !important; }
 """
 
@@ -88,7 +144,7 @@ with gr.Blocks(title="StudyBuddy AI") as demo:
     with gr.Row():
         with gr.Column(scale=1):
             gr.Markdown("#### 📄 Upload Notes")
-            file_input = gr.File(label="Drop your PDF here", file_types=[".pdf"], file_count="single", height=120)
+            file_input = gr.File(file_types=[".pdf"], file_count="single", height=120, show_label=False)
             upload_status = gr.Textbox(interactive=False, lines=1, show_label=False)
             file_input.change(upload_fn, inputs=file_input, outputs=[file_input, upload_status])
 
