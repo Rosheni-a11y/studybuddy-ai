@@ -1,34 +1,101 @@
-# StudyBuddy AI 🎓
+# StudyBuddy AI 📚
 
-A RAG-powered study assistant that lets you upload lecture notes (PDFs) and ask questions about them. Instead of answering from general knowledge, it searches through YOUR notes and answers only from what it finds — so every answer matches your actual syllabus.
+An agentic RAG-powered study assistant. Upload your lecture PDFs, ask questions, get quizzed, generate flashcards, or get summaries — all grounded in YOUR notes, not general knowledge.
 
-<img width="955" height="413" alt="image" src="https://github.com/user-attachments/assets/ab118f52-2d35-4fc1-901f-a94d3e01a3a9" />
+🔗 **Live Demo:** [huggingface.co/spaces/Rosheni123/studybuddy-ai](https://huggingface.co/spaces/Rosheni123/studybuddy-ai)
 
+## Features
+
+- **Ask Questions** — get answers sourced only from your uploaded notes
+- **Quiz Generation** — MCQs (theory, practical scenarios, or mixed) from your notes
+- **Summarize** — get organized revision notes from any chapter/topic
+- **Flashcards** — term → definition pairs for quick revision
+- **Explain Like a Kid** — adapts explanation style to how you ask
+- **Chat History** — agent remembers context within a conversation
+- **Multi-PDF Support** — upload multiple PDFs, agent knows which files are loaded
 
 ## How it works
 
-1. You upload a lecture PDF
-2. The app splits it into small chunks (~500 characters each)
-3. Each chunk gets converted into a vector (a list of numbers that captures its meaning)
-4. Vectors are stored in ChromaDB (a local vector database)
-5. When you ask a question, your question also becomes a vector
-6. ChromaDB finds the 4 chunks most similar to your question
-7. Those chunks + your question get sent to an LLM (via Groq API)
-8. The LLM answers using ONLY the provided chunks — no hallucination
+1. Upload a lecture PDF → split into ~500-character chunks
+2. Each chunk is embedded using all-MiniLM-L6-v2 (runs on CPU)
+3. Vectors stored in ChromaDB
+4. When you ask something, your question becomes a vector
+5. ChromaDB finds the most similar chunks (semantic search)
+6. An **agentic layer** decides which tool to call (ask/quiz/summarize/flashcards/stats/clear)
+7. The LLM generates a response using ONLY your notes — no hallucination
 
-## Tech stack
+## Architecture
 
-- **Frontend:** React (Vite)
-- **Backend:** Flask, Python
-- **RAG pipeline:** LangChain, ChromaDB, HuggingFace Embeddings (all-MiniLM-L6-v2)
-- **LLM:** Llama 3.1 via Groq API (free tier)
-- **Embedding:** Runs locally on CPU — no GPU needed
+```
+User Message
+    ↓
+Agent (LLM with tool calling)
+    ↓ decides tool
+┌─────────┬──────────┬───────────┬────────────┬───────┬───────┐
+│  ask    │  quiz    │ summarize │ flashcards │ stats │ clear │
+└────┬────┴────┬─────┴─────┬─────┴─────┬──────┴───────┴───────┘
+     │         │           │           │
+     └─────────┴───────────┴───────────┘
+                    ↓
+            ChromaDB (RAG retrieval)
+                    ↓
+            Groq LLM (answer generation)
+                    ↓
+              Response to user
+```
 
-## Getting started
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend/UI** | Gradio (deployed on HF Spaces) |
+| **Agentic Layer** | LLM tool calling with keyword fallback |
+| **RAG Pipeline** | LangChain, ChromaDB |
+| **Embeddings** | all-MiniLM-L6-v2 (ONNX, CPU) |
+| **LLM** | Qwen 3.8-27B via Groq API |
+| **Deployment** | Hugging Face Spaces (ZeroGPU) |
+
+## Evaluation
+
+Retrieval evaluation on 20 Q&A pairs from a Flutter lecture PDF:
+
+| Metric | Score |
+|--------|-------|
+| **Average Recall** | 97.8% |
+| **Perfect Recall (100%)** | 18/20 |
+| **Partial Recall** | 2/20 |
+| **Failures** | 0/20 |
+
+## Project Structure
+
+```
+studybuddy-ai/
+├── hf-space/                # Deployed on HF Spaces
+│   ├── app.py               # Gradio UI
+│   ├── agent.py             # Agentic layer (6 tools)
+│   ├── rag_engine.py        # RAG pipeline
+│   └── requirements.txt
+├── backend/                 # Local development
+│   ├── app.py               # Flask API server
+│   ├── agent.py             # Agent (local version)
+│   ├── rag_engine.py        # RAG pipeline
+│   ├── mcp_tools.py         # FastMCP server
+│   └── eval/
+│       ├── run_eval.py      # Retrieval evaluation script
+│       ├── eval_data.json   # 20 Q&A test pairs
+│       └── eval_results.json
+├── frontend/                # React UI (local dev)
+│   └── src/
+│       ├── App.jsx
+│       └── App.css
+└── README.md
+```
+
+## Local Development
 
 ### 1. Get a free Groq API key
 
-Sign up at [console.groq.com](https://console.groq.com) (no credit card needed) and create an API key.
+Sign up at [console.groq.com](https://console.groq.com) and create an API key.
 
 ### 2. Backend setup
 
@@ -40,60 +107,30 @@ venv\Scripts\activate        # Windows
 pip install -r requirements.txt
 ```
 
-Create a `.env` file inside `backend/`: GROQ_API_KEY=your_key_here
+Create `.env` inside `backend/`:
+```
+GROQ_API_KEY=your_key_here
+```
 
 Start the server:
-
 ```bash
 python app.py
 ```
 
-The API runs at `http://localhost:5000`.
-
-### 3. Frontend setup
+### 3. Run evaluation
 
 ```bash
-cd frontend
-npm install
-npm run dev
+cd backend/eval
+python run_eval.py
 ```
 
-Open `http://localhost:5173` in your browser.
+## What I Learned
 
-## API endpoints
-
-- `POST /upload` — upload a PDF file to be chunked and embedded
-- `POST /ask` — send a question and get an answer from your notes
-- `GET /stats` — see how many chunks are stored
-- `POST /clear` — delete all stored chunks
-
-## Project structure
-```
-studybuddy-ai/
-├── backend/
-│   ├── app.py              # Flask API server
-│   ├── rag_engine.py        # RAG pipeline (chunking, embedding, querying)
-│   ├── .env                 # Groq API key (not committed)
-│   └── chroma_db/           # Vector database (auto-created)
-├── frontend/
-│   └── src/
-│       ├── App.jsx          # Chat UI
-│       └── App.css          # Styling
-└── README.md
-```
-
-## What I learned building this
-
-- How RAG (Retrieval Augmented Generation) works end to end
+- RAG (Retrieval Augmented Generation) end-to-end pipeline
 - Document chunking strategies and why chunk size/overlap matters
-- Vector embeddings and similarity search using cosine distance
+- Vector embeddings and similarity search
+- Building an agentic layer with LLM tool calling
+- MCP (Model Context Protocol) tool design with FastMCP
+- Deploying ML apps on Hugging Face Spaces with ZeroGPU
+- Retrieval evaluation methodology (recall measurement)
 - Prompt engineering to ground LLM responses in source documents
-- Connecting a Python ML backend to a React frontend
-
-## Future improvements
-
-- Chat history so follow-up questions have context
-- Support for .docx and .txt files
-- "Quiz me" mode that generates questions from your notes
-- Page number tracking in source attribution
-- Deployment on Render + Vercel
