@@ -3,6 +3,7 @@
 An agentic RAG-powered study assistant. Upload your lecture PDFs, ask questions, get quizzed, generate flashcards, or get summaries — all grounded in YOUR notes, not general knowledge.
 
 **Live Demo:** [studybuddy-ai.vercel.app](https://studybuddy-ai.vercel.app)
+
 **HF Space:** [huggingface.co/spaces/Rosheni123/studybuddy-ai](https://huggingface.co/spaces/Rosheni123/studybuddy-ai)
 
 ---
@@ -11,19 +12,26 @@ An agentic RAG-powered study assistant. Upload your lecture PDFs, ask questions,
 
 ### Landing Page
 
-<!-- ![Landing Page](screenshots/landing.png) -->
+<img width="1907" height="874" alt="image" src="https://github.com/user-attachments/assets/6dcb8d99-282d-4c70-b427-ab0bfabde5eb" />
+
+<img width="1902" height="879" alt="image" src="https://github.com/user-attachments/assets/78ad5d18-07e5-4265-bcb2-d69575b16fdc" />
+
+
 
 ### Study App
 
-<!-- ![Study App](screenshots/app.png) -->
+<img width="1903" height="869" alt="image" src="https://github.com/user-attachments/assets/feeca2fc-8d03-46b9-bd4c-9235508385ae" />
+
 
 ### Chat with Notes
 
-<!-- ![Chat](screenshots/chat.png) -->
+<img width="1899" height="865" alt="image" src="https://github.com/user-attachments/assets/737c24d1-03fd-4a51-9508-c2c93b48dbf5" />
+
 
 ### Upload & Database
 
-<!-- ![Upload](screenshots/upload.png) -->
+<img width="1912" height="863" alt="image" src="https://github.com/user-attachments/assets/25579bdd-168b-4559-a068-74f05e49fb2b" />
+
 
 ---
 
@@ -204,4 +212,4 @@ python run_eval.py
 
 ---
 
-Built by **Rosheni** · [Portfolio](https://roshenios95.vercel.app) · [GitHub](https://github.com/Rosheni-a11y/studybuddy-ai)
+Built by **Rosheni** · 
