@@ -118,7 +118,7 @@ def upload_fn(file):
         return gr.update(), "No file uploaded"
     result = upload_pdf(file.name, original_filename=os.path.basename(file.name))
     msg = result.get("message", str(result))
-    return gr.update(), f"✅ {msg}"
+    return gr.update(), msg
 
 
 def stats_fn():
@@ -129,7 +129,7 @@ def stats_fn():
 def clear_fn():
     result = clear_database()
     msg = result.get("message", str(result))
-    return None, f"🗑️ {msg}"
+    return None, msg
 
 
 with gr.Blocks(title="StudyBuddy AI") as demo:
