@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
 import { askQuestion, uploadPdf, getStats, clearNotes } from './api'
+import Mascot from './Mascot'
 
 const SUGGESTIONS = [
   { label: 'Summarize key concepts', icon: 'sparkles' },
@@ -117,6 +118,35 @@ function Icon({ name, size = 18 }) {
           <path d="M5 12l5 5L20 7" />
         </svg>
       )
+    case 'chart':
+      return (
+        <svg {...props}>
+          <path d="M4 20V10" />
+          <path d="M10 20V4" />
+          <path d="M16 20v-7" />
+          <path d="M22 20H2" />
+        </svg>
+      )
+    case 'chat':
+      return (
+        <svg {...props}>
+          <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />
+        </svg>
+      )
+    case 'refresh':
+      return (
+        <svg {...props}>
+          <path d="M20 11a8 8 0 0 0-14.9-3M4 5v4h4" />
+          <path d="M4 13a8 8 0 0 0 14.9 3M20 19v-4h-4" />
+        </svg>
+      )
+    case 'trash':
+      return (
+        <svg {...props}>
+          <path d="M4 7h16M10 11v6M14 11v6" />
+          <path d="M6 7l1 13h10l1-13M9 7V4h6v3" />
+        </svg>
+      )
     default:
       return null
   }
@@ -213,13 +243,11 @@ function TypingDots() {
 function EmptyState({ onPick }) {
   return (
     <div className="empty">
-      <div className="empty-badge">
-        <Icon name="sparkles" size={22} />
-      </div>
-      <h2>Ask anything from your notes</h2>
+      <Mascot size={200} />
+      <h2>Hi! What shall we study today?</h2>
       <p>
-        Upload your lecture PDFs, then ask questions. StudyBuddy retrieves the
-        most relevant passages and answers using only your material.
+        Upload your lecture PDFs, then ask me anything. I only answer from
+        your own notes, so you can trust what you read.
       </p>
       <div className="empty-tips">
         {SUGGESTIONS.map((s) => (
@@ -238,19 +266,36 @@ function EmptyState({ onPick }) {
   )
 }
 
+function ConfirmModal({ message, onConfirm, onCancel }) {
+  return (
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <p className="modal-message">{message}</p>
+        <div className="modal-actions">
+          <button type="button" className="ghost-btn" onClick={onCancel}>Cancel</button>
+          <button type="button" className="ghost-btn ghost-danger" onClick={onConfirm}>Yes, clear all</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isAsking, setIsAsking] = useState(false)
   const [files, setFiles] = useState([])
   const [uploading, setUploading] = useState(false)
+  const [uploadStatus, setUploadStatus] = useState(null)
+  const [stats, setStats] = useState('')
+  const [statsBusy, setStatsBusy] = useState(false)
+  const [dragging, setDragging] = useState(false)
+  const [notesOpen, setNotesOpen] = useState(false)
   const [toast, setToast] = useState(null)
-  const [statsText, setStatsText] = useState('')
+  const [showConfirm, setShowConfirm] = useState(false)
   const fileInputRef = useRef(null)
   const scrollRef = useRef(null)
   const textareaRef = useRef(null)
-
-  const fileCount = files.length
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -272,6 +317,21 @@ function App() {
   }
 
   useEffect(autoSize, [input])
+
+  const refreshStats = async (quiet = false) => {
+    setStatsBusy(true)
+    try {
+      setStats(await getStats())
+    } catch (err) {
+      if (!quiet) setToast({ kind: 'error', text: err.message })
+    } finally {
+      setStatsBusy(false)
+    }
+  }
+
+  useEffect(() => {
+    refreshStats(true)
+  }, [])
 
   const handleSend = async (overrideText) => {
     const text = (overrideText ?? input).trim()
@@ -301,7 +361,7 @@ function App() {
         {
           role: 'ai',
           content: isNetwork
-            ? "I couldn't reach the StudyBuddy server. If testing locally, make sure Flask is running on port 5000."
+            ? "I couldn't reach the StudyBuddy server. If you are testing locally, make sure Flask is running on port 5000."
             : err.message,
           error: true,
           id: Date.now() + 1,
@@ -312,42 +372,52 @@ function App() {
     }
   }
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files?.[0]
-    e.target.value = ''
+  const uploadFile = async (file) => {
     if (!file) return
+    const isPdf =
+      file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+    if (!isPdf) {
+      setUploadStatus({ kind: 'error', text: 'Please choose a PDF file.' })
+      return
+    }
 
     setUploading(true)
+    setUploadStatus(null)
     try {
       const data = await uploadPdf(file)
-
       setFiles((f) => [
         ...f,
-        { name: data.filename, pages: data.pages, chunks: data.chunks },
+        { name: data.filename || file.name, pages: data.pages, chunks: data.chunks },
       ])
-      setToast({ kind: 'success', text: data.message })
+      setUploadStatus({ kind: 'success', text: data.message })
+      refreshStats(true)
     } catch (err) {
-      setToast({ kind: 'error', text: err.message })
+      setUploadStatus({ kind: 'error', text: err.message })
     } finally {
       setUploading(false)
     }
   }
 
-  const handleStats = async () => {
-    try {
-      const data = await getStats()
-      setStatsText(data.message || JSON.stringify(data))
-    } catch (err) {
-      setStatsText('Error: ' + err.message)
-    }
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    uploadFile(file)
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    setDragging(false)
+    uploadFile(e.dataTransfer.files?.[0])
   }
 
   const handleClear = async () => {
+    setShowConfirm(false)
     try {
-      const data = await clearNotes()
+      const text = await clearNotes()
       setFiles([])
-      setStatsText(data.message || 'Cleared')
-      setToast({ kind: 'success', text: 'Notes cleared' })
+      setUploadStatus(null)
+      setToast({ kind: 'success', text })
+      refreshStats(true)
     } catch (err) {
       setToast({ kind: 'error', text: err.message })
     }
@@ -367,37 +437,62 @@ function App() {
       <header className="header">
         <div className="header-inner">
           <div className="brand">
-            <div className="brand-logo">
-              <Icon name="logo" size={22} />
-            </div>
+            <img className="brand-logo" src="/logo-small.webp" alt="StudyBuddy AI logo" />
             <div className="brand-text">
               <h1>StudyBuddy AI</h1>
               <span>Your personal study assistant</span>
             </div>
           </div>
+
+          <button
+            type="button"
+            className="notes-toggle"
+            onClick={() => setNotesOpen((o) => !o)}
+            aria-expanded={notesOpen}
+          >
+            <Icon name="file" size={15} /> {notesOpen ? 'Hide notes' : 'My notes'}
+          </button>
         </div>
       </header>
 
-      <div className="main-layout">
-        <aside className="sidebar">
-          <div className="sidebar-section">
-            <h3 className="sidebar-title">Upload Notes</h3>
-            <button
-              type="button"
-              className="upload-btn"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
+      <div className={`workspace ${notesOpen ? 'notes-open' : ''}`}>
+        <aside className={`sidebar ${notesOpen ? 'open' : ''}`}>
+          <section className="card">
+            <h3>
+              <Icon name="file" size={16} /> Upload notes
+            </h3>
+            <div
+              className={`dropzone ${dragging ? 'drag' : ''} ${uploading ? 'busy' : ''}`}
+              role="button"
+              tabIndex={0}
+              onClick={() => !uploading && fileInputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  if (!uploading) fileInputRef.current?.click()
+                }
+              }}
+              onDragOver={(e) => {
+                e.preventDefault()
+                setDragging(true)
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={handleDrop}
             >
               {uploading ? (
                 <>
-                  <span className="spinner" /> Uploading…
+                  <span className="spinner spinner-dark" />
+                  <strong>Reading your PDF…</strong>
+                  <span>This can take a moment</span>
                 </>
               ) : (
                 <>
-                  <Icon name="upload" size={16} /> Upload PDF
+                  <Icon name="upload" size={26} />
+                  <strong>Drop a PDF here</strong>
+                  <span>or click to browse</span>
                 </>
               )}
-            </button>
+            </div>
             <input
               ref={fileInputRef}
               type="file"
@@ -405,33 +500,92 @@ function App() {
               hidden
               onChange={handleFileChange}
             />
-            {files.length > 0 && (
-              <div className="file-list">
-                {files.map((f, i) => (
-                  <div key={i} className="file-item">
-                    <Icon name="file" size={14} />
-                    <span>{f.name}</span>
-                  </div>
-                ))}
+            {uploadStatus && (
+              <div className={`status status-${uploadStatus.kind}`} role="status">
+                {uploadStatus.text}
               </div>
             )}
-          </div>
+            {files.length > 0 && (
+              <ul className="file-list">
+                {files.map((f, i) => (
+                  <li className="file-item" key={`${f.name}-${i}`}>
+                    <Icon name="file" size={15} />
+                    <div className="file-text">
+                      <span className="name" title={f.name}>
+                        {f.name}
+                      </span>
+                      {(f.pages || f.chunks) && (
+                        <span className="meta">
+                          {f.pages ? `${f.pages} pages` : ''}
+                          {f.pages && f.chunks ? ' · ' : ''}
+                          {f.chunks ? `${f.chunks} chunks` : ''}
+                        </span>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
-          <div className="sidebar-section">
-            <h3 className="sidebar-title">Database</h3>
-            {statsText && <p className="stats-text">{statsText}</p>}
-            <div className="sidebar-buttons">
-              <button type="button" className="stats-btn" onClick={handleStats}>
-                Stats
+          <section className="card">
+            <h3>
+              <Icon name="chart" size={16} /> Database
+            </h3>
+            <div className="stats-box">
+              {statsBusy && !stats ? 'Checking…' : stats || 'No stats yet. Press Refresh.'}
+            </div>
+            <div className="btn-row">
+              <button
+                type="button"
+                className="ghost-btn"
+                onClick={() => refreshStats(false)}
+                disabled={statsBusy}
+              >
+                <Icon name="refresh" size={14} /> Refresh
               </button>
-              <button type="button" className="clear-btn" onClick={handleClear}>
-                Clear
+              <button type="button" className="ghost-btn ghost-danger" onClick={() => setShowConfirm(true)}>
+                <Icon name="trash" size={14} /> Clear
               </button>
             </div>
-          </div>
+          </section>
+
+          <section className="card can-do">
+            <h3>
+              <Icon name="sparkles" size={16} /> What I can do
+            </h3>
+            <ul>
+              <li>
+                <strong>Ask</strong> any question about your notes
+              </li>
+              <li>
+                <strong>Summarize</strong> a chapter or topic
+              </li>
+              <li>
+                <strong>Quiz</strong> you with practice questions
+              </li>
+              <li>
+                <strong>Flashcards</strong> for the key terms
+              </li>
+            </ul>
+          </section>
         </aside>
 
-        <div className="chat-column">
+        <section className="chat-col">
+          <div className="chat-head">
+            <h2>
+              <Icon name="chat" size={16} /> Chat with your notes
+            </h2>
+            <button
+              type="button"
+              className="ghost-btn"
+              onClick={() => setMessages([])}
+              disabled={messages.length === 0 || isAsking}
+            >
+              New chat
+            </button>
+          </div>
+
           <main className="chat" ref={scrollRef}>
             <div className="chat-inner">
               {showEmpty ? (
@@ -470,11 +624,7 @@ function App() {
                 <textarea
                   ref={textareaRef}
                   rows={1}
-                  placeholder={
-                    fileCount === 0
-                      ? 'Upload a PDF first, then ask anything…'
-                      : 'Ask a question about your notes…'
-                  }
+                  placeholder="Ask a question about your notes…"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={onKeyDown}
@@ -490,12 +640,22 @@ function App() {
                 </button>
               </div>
               <p className="hint">
-                Press <kbd>Enter</kbd> to send, <kbd>Shift</kbd>+<kbd>Enter</kbd> for a new line.
+                StudyBuddy answers only from your uploaded notes. Press{' '}
+                <kbd>Enter</kbd> to send, <kbd>Shift</kbd>+<kbd>Enter</kbd> for a
+                new line.
               </p>
             </div>
           </footer>
-        </div>
+        </section>
       </div>
+
+      {showConfirm && (
+        <ConfirmModal
+          message="Delete all uploaded notes? This cannot be undone."
+          onConfirm={handleClear}
+          onCancel={() => setShowConfirm(false)}
+        />
+      )}
 
       {toast && (
         <div className={`toast toast-${toast.kind}`} role="status">

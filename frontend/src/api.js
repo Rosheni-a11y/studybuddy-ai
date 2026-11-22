@@ -52,24 +52,22 @@ export async function getStats() {
   if (isLocal) {
     const res = await fetch(`${FLASK}/stats`)
     const data = await res.json().catch(() => null)
-    if (!res.ok) throw new Error((data && data.error) || `Backend error ${res.status}`)
-    return data
+    if (!res.ok || !data) throw new Error('Could not read stats')
+    return String(data.message ?? JSON.stringify(data))
   }
-
   const app = await getClient()
   const result = await app.predict('/stats_fn', {})
-  return { message: String(result.data[0] ?? '') }
+  return String(result.data[0] ?? '')
 }
 
 export async function clearNotes() {
   if (isLocal) {
     const res = await fetch(`${FLASK}/clear`, { method: 'POST' })
     const data = await res.json().catch(() => null)
-    if (!res.ok) throw new Error((data && data.error) || `Backend error ${res.status}`)
-    return data
+    if (!res.ok || !data) throw new Error('Could not clear notes')
+    return String(data.message ?? 'Cleared')
   }
-
   const app = await getClient()
   const result = await app.predict('/clear_fn', {})
-  return { message: String(result.data[1] ?? 'Cleared') }
+  return String(result.data[1] ?? 'Cleared')
 }
