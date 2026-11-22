@@ -58,7 +58,7 @@ export async function uploadPdf(file, userId = 'anonymous') {
 
   const app = await getClient()
   const result = await app.predict('/upload_user', { file, user_id: userId })
-  const message = String(result.data[1] ?? 'Uploaded').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim()
+  const message = String(result.data[0] ?? 'Uploaded').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim()
   const m = message.match(/(\d+)\s*pages?\s*->\s*(\d+)\s*chunks?/i)
   return {
     message,
@@ -77,7 +77,7 @@ export async function getStats(userId = 'anonymous') {
   }
   const app = await getClient()
   const result = await app.predict('/stats_user', { user_id: userId })
-  return String(result.data[0] ?? '')
+  return String(result.data ?? '')
 }
 
 export async function clearNotes(userId = 'anonymous') {
@@ -93,5 +93,5 @@ export async function clearNotes(userId = 'anonymous') {
   }
   const app = await getClient()
   const result = await app.predict('/clear_user', { user_id: userId })
-  return String(result.data[1] ?? 'Cleared').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim()
+  return String(result.data ?? 'Cleared').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim()
 }

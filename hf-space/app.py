@@ -175,8 +175,8 @@ with gr.Blocks(title="StudyBuddy AI") as demo:
             chatbot = gr.ChatInterface(chat_fn)
 
     gr.api(ask_json, api_name="ask_json")
-    gr.api(lambda file, user_id="anonymous": upload_fn(file, user_id), api_name="upload_user")
-    gr.api(lambda user_id="anonymous": stats_fn(user_id), api_name="stats_user")
-    gr.api(lambda user_id="anonymous": clear_fn(user_id), api_name="clear_user")
+    gr.api(upload_fn, api_name="upload_user")
+    gr.api(stats_fn, api_name="stats_user")
+    gr.api(clear_fn, api_name="clear_user")
 
 demo.launch(theme=theme, css=custom_css)
