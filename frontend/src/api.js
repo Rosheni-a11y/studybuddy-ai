@@ -16,7 +16,7 @@ function getClient() {
   return clientPromise
 }
 
-export async function askQuestion(question) {
+export async function askQuestion(question, history = []) {
   if (isLocal) {
     const res = await fetch(`${FLASK}/ask`, {
       method: 'POST',
@@ -29,8 +29,19 @@ export async function askQuestion(question) {
   }
 
   const app = await getClient()
-  const result = await app.predict('/chat_fn', { message: question })
-  return { answer: String(result.data[0] ?? ''), sources: [] }
+  try {
+    const result = await app.predict('/ask_json', {
+      message: question,
+      history_json: JSON.stringify(history),
+    })
+    const data = result.data[0] || {}
+    let answer = String(data.answer ?? '')
+    if (data.tool_used) answer += `\n\nTool used: ${data.tool_used}`
+    return { answer, sources: data.sources || [] }
+  } catch {
+    const result = await app.predict('/chat_fn', { message: question })
+    return { answer: String(result.data[0] ?? ''), sources: [] }
+  }
 }
 
 export async function uploadPdf(file) {
@@ -45,7 +56,14 @@ export async function uploadPdf(file) {
 
   const app = await getClient()
   const result = await app.predict('/upload_fn', { file })
-  return { message: String(result.data[1] ?? 'Uploaded'), filename: file.name }
+  const message = String(result.data[1] ?? 'Uploaded')
+  const m = message.match(/(\d+)\s*pages?\s*->\s*(\d+)\s*chunks?/i)
+  return {
+    message,
+    filename: file.name,
+    pages: m ? Number(m[1]) : undefined,
+    chunks: m ? Number(m[2]) : undefined,
+  }
 }
 
 export async function getStats() {

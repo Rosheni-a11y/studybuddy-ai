@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import ReactMarkdown from 'react-markdown'
 import './App.css'
+import Markdown from 'react-markdown'
 import { askQuestion, uploadPdf, getStats, clearNotes } from './api'
 import Mascot from './Mascot'
+import Landing from './Landing'
 
 const SUGGESTIONS = [
   { label: 'Summarize key concepts', icon: 'sparkles' },
   { label: 'Create practice quiz', icon: 'quiz' },
   { label: 'Explain this topic', icon: 'lightbulb' },
-  { label: 'Compare concepts', icon: 'compare' },
+  { label: 'Make flashcards', icon: 'compare' },
 ]
 
 function Icon({ name, size = 18 }) {
@@ -191,11 +192,13 @@ function Message({ msg }) {
     <div className={`msg ${isAi ? 'msg-ai' : 'msg-user'}`}>
       {isAi && <Avatar kind="ai" />}
       <div className="msg-stack">
-        <div className="bubble">
+        <div className={`bubble ${isAi ? 'bubble-md' : ''}`}>
           {msg.error ? (
             <p className="bubble-error">{msg.content}</p>
+          ) : isAi ? (
+            <Markdown>{msg.content}</Markdown>
           ) : (
-            <ReactMarkdown>{msg.content}</ReactMarkdown>
+            <p>{msg.content}</p>
           )}
         </div>
         {isAi && msg.sources && msg.sources.length > 0 && (
@@ -267,21 +270,7 @@ function EmptyState({ onPick }) {
   )
 }
 
-function ConfirmModal({ message, onConfirm, onCancel }) {
-  return (
-    <div className="modal-overlay" onClick={onCancel}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <p className="modal-message">{message}</p>
-        <div className="modal-actions">
-          <button type="button" className="ghost-btn" onClick={onCancel}>Cancel</button>
-          <button type="button" className="ghost-btn ghost-danger" onClick={onConfirm}>Yes, clear all</button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function App() {
+function StudyApp({ onHome }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isAsking, setIsAsking] = useState(false)
@@ -293,7 +282,7 @@ function App() {
   const [dragging, setDragging] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
   const [toast, setToast] = useState(null)
-  const [showConfirm, setShowConfirm] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const fileInputRef = useRef(null)
   const scrollRef = useRef(null)
   const textareaRef = useRef(null)
@@ -343,8 +332,23 @@ function App() {
     setMessages((m) => [...m, userMsg])
     setIsAsking(true)
 
+    const history = []
+    let pendingUser = null
+    for (const m of messages) {
+      if (m.role === 'user') pendingUser = m.content
+      else if (m.role === 'ai' && !m.error && pendingUser !== null) {
+        history.push([pendingUser, m.content])
+        pendingUser = null
+      }
+    }
+
+    const slowTimer = setTimeout(
+      () => setToast({ kind: 'info', text: 'Waking up the free server… this can take about 30 seconds' }),
+      8000,
+    )
+
     try {
-      const data = await askQuestion(text)
+      const data = await askQuestion(text, history.slice(-6))
 
       setMessages((m) => [
         ...m,
@@ -369,6 +373,7 @@ function App() {
         },
       ])
     } finally {
+      clearTimeout(slowTimer)
       setIsAsking(false)
     }
   }
@@ -390,7 +395,7 @@ function App() {
         ...f,
         { name: data.filename || file.name, pages: data.pages, chunks: data.chunks },
       ])
-      setUploadStatus({ kind: 'success', text: data.message })
+      setUploadStatus({ kind: 'success', text: (data.message || '').replace(/^[\s✅]+/, '') })
       refreshStats(true)
     } catch (err) {
       setUploadStatus({ kind: 'error', text: err.message })
@@ -411,13 +416,17 @@ function App() {
     uploadFile(e.dataTransfer.files?.[0])
   }
 
-  const handleClear = async () => {
-    setShowConfirm(false)
+  const handleClear = () => {
+    setConfirmOpen(true)
+  }
+
+  const doClear = async () => {
+    setConfirmOpen(false)
     try {
       const text = await clearNotes()
       setFiles([])
       setUploadStatus(null)
-      setToast({ kind: 'success', text })
+      setToast({ kind: 'success', text: text.replace(/^[\s🗑️✅]+/u, '') })
       refreshStats(true)
     } catch (err) {
       setToast({ kind: 'error', text: err.message })
@@ -437,13 +446,17 @@ function App() {
     <div className="app">
       <header className="header">
         <div className="header-inner">
-          <div className="brand">
+          <div className="brand" onClick={onHome} role="link" tabIndex={0} title="Back to home">
             <img className="brand-logo" src="/logo-small.webp" alt="StudyBuddy AI logo" />
             <div className="brand-text">
               <h1>StudyBuddy AI</h1>
               <span>Your personal study assistant</span>
             </div>
           </div>
+
+          <button type="button" className="home-btn" onClick={onHome}>
+            ← Home
+          </button>
 
           <button
             type="button"
@@ -545,7 +558,7 @@ function App() {
               >
                 <Icon name="refresh" size={14} /> Refresh
               </button>
-              <button type="button" className="ghost-btn ghost-danger" onClick={() => setShowConfirm(true)}>
+              <button type="button" className="ghost-btn ghost-danger" onClick={handleClear}>
                 <Icon name="trash" size={14} /> Clear
               </button>
             </div>
@@ -650,22 +663,47 @@ function App() {
         </section>
       </div>
 
-      {showConfirm && (
-        <ConfirmModal
-          message="Delete all uploaded notes? This cannot be undone."
-          onConfirm={handleClear}
-          onCancel={() => setShowConfirm(false)}
-        />
-      )}
-
       {toast && (
         <div className={`toast toast-${toast.kind}`} role="status">
-          <Icon name={toast.kind === 'success' ? 'check' : 'file'} size={16} />
           <span>{toast.text}</span>
+        </div>
+      )}
+
+      {confirmOpen && (
+        <div className="confirm-overlay" onClick={() => setConfirmOpen(false)}>
+          <div className="confirm-box" onClick={(e) => e.stopPropagation()}>
+            <p>Delete all uploaded notes? This cannot be undone.</p>
+            <div className="confirm-actions">
+              <button type="button" className="ghost-btn" onClick={() => setConfirmOpen(false)}>Cancel</button>
+              <button type="button" className="ghost-btn ghost-danger" onClick={doClear}>Yes, delete</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
   )
 }
 
-export default App
+export default function Root() {
+  const [view, setView] = useState(window.location.hash === '#/app' ? 'app' : 'landing')
+
+  useEffect(() => {
+    const onHash = () => setView(window.location.hash === '#/app' ? 'app' : 'landing')
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [view])
+
+  const openApp = () => {
+    window.location.hash = '#/app'
+  }
+  const goHome = () => {
+    window.location.hash = ''
+    setView('landing')
+  }
+
+  return view === 'app' ? <StudyApp onHome={goHome} /> : <Landing onStart={openApp} />
+}

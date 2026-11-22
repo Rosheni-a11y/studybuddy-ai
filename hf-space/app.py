@@ -1,6 +1,7 @@
 import spaces
 import gradio as gr
 import os
+import json
 
 from rag_engine import upload_pdf, get_stats, clear_database
 from agent import agent_respond
@@ -113,12 +114,26 @@ def chat_fn(message, history):
     return answer
 
 
+def ask_json(message: str, history_json: str = "[]") -> dict:
+    """Used by the React website: returns the answer AND the sources as JSON."""
+    try:
+        history = json.loads(history_json or "[]")
+    except Exception:
+        history = []
+    result = agent_respond(message, history)
+    return {
+        "answer": result.get("answer") or "",
+        "sources": result.get("sources", []),
+        "tool_used": result.get("tool_used"),
+    }
+
+
 def upload_fn(file):
     if file is None:
         return gr.update(), "No file uploaded"
     result = upload_pdf(file.name, original_filename=os.path.basename(file.name))
     msg = result.get("message", str(result))
-    return gr.update(), msg
+    return gr.update(), f"✅ {msg}"
 
 
 def stats_fn():
@@ -129,7 +144,7 @@ def stats_fn():
 def clear_fn():
     result = clear_database()
     msg = result.get("message", str(result))
-    return None, msg
+    return None, f"🗑️ {msg}"
 
 
 with gr.Blocks(title="StudyBuddy AI") as demo:
@@ -159,5 +174,7 @@ with gr.Blocks(title="StudyBuddy AI") as demo:
         with gr.Column(scale=3):
             gr.Markdown("#### 💬 Chat with your Notes")
             chatbot = gr.ChatInterface(chat_fn)
+
+    gr.api(ask_json, api_name="ask_json")
 
 demo.launch(theme=theme, css=custom_css)
