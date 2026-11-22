@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
 import './App.css'
 import { askQuestion, uploadPdf, getStats, clearNotes } from './api'
 import Mascot from './Mascot'
@@ -194,7 +195,7 @@ function Message({ msg }) {
           {msg.error ? (
             <p className="bubble-error">{msg.content}</p>
           ) : (
-            <p>{msg.content}</p>
+            <ReactMarkdown>{msg.content}</ReactMarkdown>
           )}
         </div>
         {isAi && msg.sources && msg.sources.length > 0 && (
