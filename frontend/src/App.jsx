@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
-import Markdown from 'react-markdown'
 import { askQuestion, uploadPdf, getStats, clearNotes } from './api'
 import Mascot from './Mascot'
 import Landing from './Landing'
+import { firebaseOn, auth, googleProvider } from './firebase'
+import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth'
+import { watchChats, newChatId, saveChat, deleteChat } from './history'
 
 const SUGGESTIONS = [
   { label: 'Summarize key concepts', icon: 'sparkles' },
   { label: 'Create practice quiz', icon: 'quiz' },
   { label: 'Explain this topic', icon: 'lightbulb' },
-  { label: 'Make flashcards', icon: 'compare' },
+  { label: 'Compare concepts', icon: 'compare' },
 ]
 
 function Icon({ name, size = 18 }) {
@@ -192,11 +194,9 @@ function Message({ msg }) {
     <div className={`msg ${isAi ? 'msg-ai' : 'msg-user'}`}>
       {isAi && <Avatar kind="ai" />}
       <div className="msg-stack">
-        <div className={`bubble ${isAi ? 'bubble-md' : ''}`}>
+        <div className="bubble">
           {msg.error ? (
             <p className="bubble-error">{msg.content}</p>
-          ) : isAi ? (
-            <Markdown>{msg.content}</Markdown>
           ) : (
             <p>{msg.content}</p>
           )}
@@ -282,7 +282,9 @@ function StudyApp({ onHome }) {
   const [dragging, setDragging] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
   const [toast, setToast] = useState(null)
-  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [user, setUser] = useState(null)
+  const [chats, setChats] = useState([])
+  const [chatId, setChatId] = useState(null)
   const fileInputRef = useRef(null)
   const scrollRef = useRef(null)
   const textareaRef = useRef(null)
@@ -298,6 +300,51 @@ function StudyApp({ onHome }) {
     const id = setTimeout(() => setToast(null), 3200)
     return () => clearTimeout(id)
   }, [toast])
+
+  useEffect(() => {
+    if (!firebaseOn) return
+    return onAuthStateChanged(auth, setUser)
+  }, [])
+
+  useEffect(() => {
+    if (!user) {
+      setChats([])
+      return
+    }
+    return watchChats(user.uid, setChats)
+  }, [user])
+
+  useEffect(() => {
+    if (!user || isAsking || messages.length === 0) return
+    const id = chatId || newChatId(user.uid)
+    if (!chatId) setChatId(id)
+    saveChat(user.uid, id, messages).catch(() =>
+      setToast({ kind: 'error', text: 'Could not save this chat.' }),
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, isAsking, user])
+
+  const signIn = () =>
+    signInWithPopup(auth, googleProvider).catch(() =>
+      setToast({ kind: 'error', text: 'Sign-in did not finish.' }),
+    )
+
+  const newChat = () => {
+    setMessages([])
+    setChatId(null)
+  }
+
+  const openChat = (c) => {
+    if (isAsking) return
+    setMessages(c.messages || [])
+    setChatId(c.id)
+    setNotesOpen(false)
+  }
+
+  const removeChat = (c) => {
+    deleteChat(user.uid, c.id)
+    if (c.id === chatId) newChat()
+  }
 
   const autoSize = () => {
     const el = textareaRef.current
@@ -395,7 +442,7 @@ function StudyApp({ onHome }) {
         ...f,
         { name: data.filename || file.name, pages: data.pages, chunks: data.chunks },
       ])
-      setUploadStatus({ kind: 'success', text: (data.message || '').replace(/^[\s✅]+/, '') })
+      setUploadStatus({ kind: 'success', text: data.message })
       refreshStats(true)
     } catch (err) {
       setUploadStatus({ kind: 'error', text: err.message })
@@ -416,17 +463,13 @@ function StudyApp({ onHome }) {
     uploadFile(e.dataTransfer.files?.[0])
   }
 
-  const handleClear = () => {
-    setConfirmOpen(true)
-  }
-
-  const doClear = async () => {
-    setConfirmOpen(false)
+  const handleClear = async () => {
+    if (!window.confirm('Delete all uploaded notes? This cannot be undone.')) return
     try {
       const text = await clearNotes()
       setFiles([])
       setUploadStatus(null)
-      setToast({ kind: 'success', text: text.replace(/^[\s🗑️✅]+/u, '') })
+      setToast({ kind: 'success', text })
       refreshStats(true)
     } catch (err) {
       setToast({ kind: 'error', text: err.message })
@@ -457,6 +500,17 @@ function StudyApp({ onHome }) {
           <button type="button" className="home-btn" onClick={onHome}>
             ← Home
           </button>
+
+          {firebaseOn &&
+            (user ? (
+              <button type="button" className="home-btn" onClick={() => signOut(auth)} title={user.email}>
+                Sign out
+              </button>
+            ) : (
+              <button type="button" className="home-btn" onClick={signIn}>
+                Sign in with Google
+              </button>
+            ))}
 
           <button
             type="button"
@@ -564,6 +618,32 @@ function StudyApp({ onHome }) {
             </div>
           </section>
 
+          {firebaseOn && (
+            <section className="card history">
+              <h3>
+                <Icon name="chat" size={16} /> Past chats
+              </h3>
+              {!user ? (
+                <p className="history-note">Sign in with Google to save your chats and open them later.</p>
+              ) : chats.length === 0 ? (
+                <p className="history-note">Your chats will show up here.</p>
+              ) : (
+                <ul className="history-list">
+                  {chats.map((c) => (
+                    <li key={c.id} className={c.id === chatId ? 'active' : ''}>
+                      <button type="button" className="history-open" onClick={() => openChat(c)} title={c.title}>
+                        {c.title}
+                      </button>
+                      <button type="button" className="history-del" onClick={() => removeChat(c)} aria-label="Delete chat">
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+
           <section className="card can-do">
             <h3>
               <Icon name="sparkles" size={16} /> What I can do
@@ -593,7 +673,7 @@ function StudyApp({ onHome }) {
             <button
               type="button"
               className="ghost-btn"
-              onClick={() => setMessages([])}
+              onClick={newChat}
               disabled={messages.length === 0 || isAsking}
             >
               New chat
@@ -665,19 +745,8 @@ function StudyApp({ onHome }) {
 
       {toast && (
         <div className={`toast toast-${toast.kind}`} role="status">
+          <Icon name={toast.kind === 'success' ? 'check' : 'file'} size={16} />
           <span>{toast.text}</span>
-        </div>
-      )}
-
-      {confirmOpen && (
-        <div className="confirm-overlay" onClick={() => setConfirmOpen(false)}>
-          <div className="confirm-box" onClick={(e) => e.stopPropagation()}>
-            <p>Delete all uploaded notes? This cannot be undone.</p>
-            <div className="confirm-actions">
-              <button type="button" className="ghost-btn" onClick={() => setConfirmOpen(false)}>Cancel</button>
-              <button type="button" className="ghost-btn ghost-danger" onClick={doClear}>Yes, delete</button>
-            </div>
-          </div>
         </div>
       )}
     </div>

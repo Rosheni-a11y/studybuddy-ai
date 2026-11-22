@@ -1356,18 +1356,12 @@
 .hint kbd { border: 1px solid var(--line); border-radius: 5px; }
 .toast { border: 0; box-shadow: 0 8px 24px -10px rgba(61, 38, 48, 0.4); border-radius: 12px; top: 80px; }
 
-.confirm-overlay {
-  position: fixed; inset: 0; z-index: 100; background: rgba(0, 0, 0, 0.4);
-  display: grid; place-items: center; backdrop-filter: blur(4px);
-}
-.confirm-box {
-  background: var(--paper, #fbf1e6); border: 1px solid var(--line, rgba(61,38,48,0.2));
-  border-radius: 16px; padding: 28px 32px; max-width: 380px; width: 90vw;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center;
-}
-.confirm-box p {
-  margin: 0 0 20px; font-size: 16px; font-weight: 600; color: var(--ink, #3d2630); line-height: 1.4;
-}
-.confirm-actions { display: flex; gap: 10px; justify-content: center; }
-.confirm-actions .ghost-btn { min-width: 100px; justify-content: center; }
-.confirm-actions .ghost-danger:hover { color: #fff; }
+/* ---- past chats (Firebase) ---- */
+.history-note { font-size: 15px; line-height: 1.5; color: var(--ink); opacity: 0.75; margin: 0; }
+.history-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 190px; overflow-y: auto; }
+.history-list li { display: flex; align-items: center; border-radius: 10px; }
+.history-list li.active { background: var(--peach-soft); }
+.history-list li:hover { background: var(--pink-soft); }
+.history-open { flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 8px 10px; font: inherit; font-size: 15px; color: var(--ink); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.history-del { background: none; border: 0; font-size: 20px; line-height: 1; padding: 4px 10px; color: var(--ink); opacity: 0.5; cursor: pointer; }
+.history-del:hover { opacity: 1; }
