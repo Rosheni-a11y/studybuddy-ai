@@ -24,7 +24,8 @@ def upload():
         tmp_path = tmp.name
 
     try:
-        result = upload_pdf(tmp_path, original_filename=file.filename)
+        user_id = request.form.get('user_id', 'anonymous')
+        result = upload_pdf(tmp_path, original_filename=file.filename, user_id=user_id)
         return jsonify(result)
     finally:
         os.unlink(tmp_path)
@@ -38,7 +39,7 @@ def ask():
 
 
     try:
-        result = agent_respond(data['question'])
+        result = agent_respond(data['question'], user_id=data.get('user_id', 'anonymous'))
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -47,13 +48,16 @@ def ask():
 
 @app.route('/stats', methods=['GET'])
 def stats():
-    result = get_stats()
+    user_id = request.args.get('user_id', 'anonymous')
+    result = get_stats(user_id=user_id)
     return jsonify(result)
 
 
 @app.route('/clear', methods=['POST'])
 def clear():
-    result = clear_database()
+    data = request.get_json(silent=True) or {}
+    user_id = data.get('user_id', 'anonymous')
+    result = clear_database(user_id=user_id)
     return jsonify(result)
 
 

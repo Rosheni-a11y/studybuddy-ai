@@ -6,7 +6,7 @@ import Mascot from './Mascot'
 import Landing from './Landing'
 import { firebaseOn, auth, googleProvider } from './firebase'
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth'
-import { watchChats, newChatId, saveChat, deleteChat } from './history'
+import { watchChats, newChatId, saveChat, renameChat, deleteChat } from './history'
 
 const SUGGESTIONS = [
   { label: 'Summarize key concepts', icon: 'sparkles' },
@@ -284,6 +284,8 @@ function StudyApp({ onHome }) {
   const [notesOpen, setNotesOpen] = useState(false)
   const [toast, setToast] = useState(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [editingChatId, setEditingChatId] = useState(null)
+  const [editTitle, setEditTitle] = useState('')
   const [user, setUser] = useState(null)
   const [chats, setChats] = useState([])
   const [chatId, setChatId] = useState(null)
@@ -343,6 +345,19 @@ function StudyApp({ onHome }) {
     setNotesOpen(false)
   }
 
+  const startRename = (c) => {
+    setEditingChatId(c.id)
+    setEditTitle(c.title)
+  }
+
+  const submitRename = (c) => {
+    const trimmed = editTitle.trim()
+    if (trimmed && trimmed !== c.title) {
+      renameChat(user.uid, c.id, trimmed)
+    }
+    setEditingChatId(null)
+  }
+
   const removeChat = (c) => {
     deleteChat(user.uid, c.id)
     if (c.id === chatId) newChat()
@@ -360,7 +375,7 @@ function StudyApp({ onHome }) {
   const refreshStats = async (quiet = false) => {
     setStatsBusy(true)
     try {
-      setStats(await getStats())
+      setStats(await getStats(user?.uid || 'anonymous'))
     } catch (err) {
       if (!quiet) setToast({ kind: 'error', text: err.message })
     } finally {
@@ -397,7 +412,7 @@ function StudyApp({ onHome }) {
     )
 
     try {
-      const data = await askQuestion(text, history.slice(-6))
+      const data = await askQuestion(text, history.slice(-6), user?.uid || 'anonymous')
 
       setMessages((m) => [
         ...m,
@@ -439,7 +454,7 @@ function StudyApp({ onHome }) {
     setUploading(true)
     setUploadStatus(null)
     try {
-      const data = await uploadPdf(file)
+      const data = await uploadPdf(file, user?.uid || 'anonymous')
       setFiles((f) => [
         ...f,
         { name: data.filename || file.name, pages: data.pages, chunks: data.chunks },
@@ -470,7 +485,7 @@ function StudyApp({ onHome }) {
   const doClear = async () => {
     setConfirmOpen(false)
     try {
-      const text = await clearNotes()
+      const text = await clearNotes(user?.uid || 'anonymous')
       setFiles([])
       setUploadStatus(null)
       setToast({ kind: 'success', text })
@@ -636,8 +651,25 @@ function StudyApp({ onHome }) {
                 <ul className="history-list">
                   {chats.map((c) => (
                     <li key={c.id} className={c.id === chatId ? 'active' : ''}>
-                      <button type="button" className="history-open" onClick={() => openChat(c)} title={c.title}>
-                        {c.title}
+                      {editingChatId === c.id ? (
+                        <input
+                          className="history-rename"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          onBlur={() => submitRename(c)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') submitRename(c)
+                            if (e.key === 'Escape') setEditingChatId(null)
+                          }}
+                          autoFocus
+                        />
+                      ) : (
+                        <button type="button" className="history-open" onClick={() => openChat(c)} title={c.title}>
+                          {c.title}
+                        </button>
+                      )}
+                      <button type="button" className="history-edit" onClick={() => startRename(c)} aria-label="Rename chat">
+                        ✎
                       </button>
                       <button type="button" className="history-del" onClick={() => removeChat(c)} aria-label="Delete chat">
                         ×

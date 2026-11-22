@@ -1,5 +1,5 @@
 import {
-  collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy, limit,
+  collection, doc, setDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, limit,
 } from 'firebase/firestore'
 import { db } from './firebase'
 
@@ -21,6 +21,10 @@ export async function saveChat(uid, chatId, messages) {
   const title = (first?.content || 'New chat').slice(0, 60)
   const clean = JSON.parse(JSON.stringify(messages))
   await setDoc(doc(chatsRef(uid), chatId), { title, messages: clean, updatedAt: Date.now() })
+}
+
+export async function renameChat(uid, chatId, newTitle) {
+  await updateDoc(doc(chatsRef(uid), chatId), { title: newTitle })
 }
 
 export async function deleteChat(uid, chatId) {

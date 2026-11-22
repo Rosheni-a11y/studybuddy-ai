@@ -16,12 +16,12 @@ function getClient() {
   return clientPromise
 }
 
-export async function askQuestion(question, history = []) {
+export async function askQuestion(question, history = [], userId = 'anonymous') {
   if (isLocal) {
     const res = await fetch(`${FLASK}/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({ question, user_id: userId }),
     })
     const data = await res.json().catch(() => null)
     if (!res.ok) throw new Error((data && data.error) || `Backend error ${res.status}`)
@@ -33,6 +33,7 @@ export async function askQuestion(question, history = []) {
     const result = await app.predict('/ask_json', {
       message: question,
       history_json: JSON.stringify(history),
+      user_id: userId,
     })
     const data = result.data[0] || {}
     let answer = String(data.answer ?? '')
@@ -44,10 +45,11 @@ export async function askQuestion(question, history = []) {
   }
 }
 
-export async function uploadPdf(file) {
+export async function uploadPdf(file, userId = 'anonymous') {
   if (isLocal) {
     const formData = new FormData()
     formData.append('file', file)
+    formData.append('user_id', userId)
     const res = await fetch(`${FLASK}/upload`, { method: 'POST', body: formData })
     const data = await res.json().catch(() => null)
     if (!res.ok || !data || data.error) throw new Error((data && data.error) || 'Upload failed')
@@ -55,7 +57,7 @@ export async function uploadPdf(file) {
   }
 
   const app = await getClient()
-  const result = await app.predict('/upload_fn', { file })
+  const result = await app.predict('/upload_user', { file, user_id: userId })
   const message = String(result.data[1] ?? 'Uploaded').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim()
   const m = message.match(/(\d+)\s*pages?\s*->\s*(\d+)\s*chunks?/i)
   return {
@@ -66,26 +68,30 @@ export async function uploadPdf(file) {
   }
 }
 
-export async function getStats() {
+export async function getStats(userId = 'anonymous') {
   if (isLocal) {
-    const res = await fetch(`${FLASK}/stats`)
+    const res = await fetch(`${FLASK}/stats?user_id=${userId}`)
     const data = await res.json().catch(() => null)
     if (!res.ok || !data) throw new Error('Could not read stats')
     return String(data.message ?? JSON.stringify(data))
   }
   const app = await getClient()
-  const result = await app.predict('/stats_fn', {})
+  const result = await app.predict('/stats_user', { user_id: userId })
   return String(result.data[0] ?? '')
 }
 
-export async function clearNotes() {
+export async function clearNotes(userId = 'anonymous') {
   if (isLocal) {
-    const res = await fetch(`${FLASK}/clear`, { method: 'POST' })
+    const res = await fetch(`${FLASK}/clear`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId }),
+    })
     const data = await res.json().catch(() => null)
     if (!res.ok || !data) throw new Error('Could not clear notes')
     return String(data.message ?? 'Cleared')
   }
   const app = await getClient()
-  const result = await app.predict('/clear_fn', {})
+  const result = await app.predict('/clear_user', { user_id: userId })
   return String(result.data[1] ?? 'Cleared').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim()
 }

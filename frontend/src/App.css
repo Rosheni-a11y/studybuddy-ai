@@ -1445,5 +1445,8 @@
 .history-list li.active { background: var(--peach-soft); }
 .history-list li:hover { background: var(--pink-soft); }
 .history-open { flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 8px 10px; font: inherit; font-size: 15px; color: var(--ink); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.history-del { background: none; border: 0; font-size: 20px; line-height: 1; padding: 4px 10px; color: var(--ink); opacity: 0.5; cursor: pointer; }
+.history-edit { background: none; border: 0; font-size: 15px; line-height: 1; padding: 4px 6px; color: var(--ink); opacity: 0.4; cursor: pointer; }
+.history-edit:hover { opacity: 1; }
+.history-del { background: none; border: 0; font-size: 20px; line-height: 1; padding: 4px 6px; color: var(--ink); opacity: 0.4; cursor: pointer; }
 .history-del:hover { opacity: 1; }
+.history-rename { flex: 1; min-width: 0; padding: 6px 10px; font: inherit; font-size: 14px; border: 1.5px solid var(--ink); border-radius: 6px; background: #fff; color: var(--ink); outline: none; }

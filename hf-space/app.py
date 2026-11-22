@@ -114,13 +114,12 @@ def chat_fn(message, history):
     return answer
 
 
-def ask_json(message: str, history_json: str = "[]") -> dict:
-    """Used by the React website: returns the answer AND the sources as JSON."""
+def ask_json(message: str, history_json: str = "[]", user_id: str = "anonymous") -> dict:
     try:
         history = json.loads(history_json or "[]")
     except Exception:
         history = []
-    result = agent_respond(message, history)
+    result = agent_respond(message, history, user_id=user_id)
     return {
         "answer": result.get("answer") or "",
         "sources": result.get("sources", []),
@@ -128,23 +127,23 @@ def ask_json(message: str, history_json: str = "[]") -> dict:
     }
 
 
-def upload_fn(file):
+def upload_fn(file, user_id: str = "anonymous"):
     if file is None:
         return gr.update(), "No file uploaded"
-    result = upload_pdf(file.name, original_filename=os.path.basename(file.name))
+    result = upload_pdf(file.name, original_filename=os.path.basename(file.name), user_id=user_id)
     msg = result.get("message", str(result))
-    return gr.update(), f"✅ {msg}"
+    return gr.update(), msg
 
 
-def stats_fn():
-    result = get_stats()
+def stats_fn(user_id: str = "anonymous"):
+    result = get_stats(user_id=user_id)
     return result.get("message", str(result))
 
 
-def clear_fn():
-    result = clear_database()
+def clear_fn(user_id: str = "anonymous"):
+    result = clear_database(user_id=user_id)
     msg = result.get("message", str(result))
-    return None, f"🗑️ {msg}"
+    return None, msg
 
 
 with gr.Blocks(title="StudyBuddy AI") as demo:
@@ -176,5 +175,8 @@ with gr.Blocks(title="StudyBuddy AI") as demo:
             chatbot = gr.ChatInterface(chat_fn)
 
     gr.api(ask_json, api_name="ask_json")
+    gr.api(lambda file, user_id="anonymous": upload_fn(file, user_id), api_name="upload_user")
+    gr.api(lambda user_id="anonymous": stats_fn(user_id), api_name="stats_user")
+    gr.api(lambda user_id="anonymous": clear_fn(user_id), api_name="clear_user")
 
 demo.launch(theme=theme, css=custom_css)

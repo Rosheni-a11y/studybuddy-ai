@@ -54,7 +54,7 @@ def _get_client():
     return _client
 
 
-def upload_pdf(file_path: str, original_filename: str | None = None) -> dict:
+def upload_pdf(file_path: str, original_filename: str | None = None, user_id: str = "anonymous") -> dict:
     loader = PyPDFLoader(file_path)
     pages = loader.load()
 
@@ -71,6 +71,7 @@ def upload_pdf(file_path: str, original_filename: str | None = None) -> dict:
     filename = original_filename or os.path.basename(file_path)
     for chunk in chunks:
         chunk.metadata["source_file"] = filename
+        chunk.metadata["user_id"] = user_id
 
     _get_vectorstore().add_documents(chunks)
 
@@ -82,8 +83,11 @@ def upload_pdf(file_path: str, original_filename: str | None = None) -> dict:
     }
 
 
-def ask_question(question: str) -> dict:
-    results = _get_vectorstore().similarity_search_with_score(question, k=4)
+def ask_question(question: str, user_id: str = "anonymous") -> dict:
+    search_kwargs = {"k": 4}
+    if user_id != "anonymous":
+        search_kwargs["filter"] = {"user_id": user_id}
+    results = _get_vectorstore().similarity_search_with_score(question, **search_kwargs)
 
     if not results:
         return {
@@ -129,8 +133,12 @@ ANSWER:"""
     }
 
 
-def get_stats() -> dict:
-    total_chunks = _get_vectorstore()._collection.count()
+def get_stats(user_id: str = "anonymous") -> dict:
+    if user_id != "anonymous":
+        result = _get_vectorstore()._collection.get(where={"user_id": user_id})
+        total_chunks = len(result["ids"])
+    else:
+        total_chunks = _get_vectorstore()._collection.count()
 
     return {
         "total_chunks": total_chunks,
@@ -138,8 +146,12 @@ def get_stats() -> dict:
     }
 
 
-def clear_database() -> dict:
-    all_ids = _get_vectorstore()._collection.get()["ids"]
+def clear_database(user_id: str = "anonymous") -> dict:
+    if user_id != "anonymous":
+        result = _get_vectorstore()._collection.get(where={"user_id": user_id})
+        all_ids = result["ids"]
+    else:
+        all_ids = _get_vectorstore()._collection.get()["ids"]
 
     if not all_ids:
         return {"message": "Database is already empty."}

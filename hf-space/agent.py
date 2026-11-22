@@ -87,25 +87,28 @@ TOOLS = [
 ]
 
 
-def _run_tool(name: str, args: dict) -> str:
+def _run_tool(name: str, args: dict, user_id: str = "anonymous") -> str:
     if name == "ask":
-        return json.dumps(ask_question(args["question"]))
+        return json.dumps(ask_question(args["question"], user_id=user_id))
     elif name == "quiz":
-        return _run_quiz(args.get("topic", "general"), args.get("num_questions", 5))
+        return _run_quiz(args.get("topic", "general"), args.get("num_questions", 5), user_id=user_id)
     elif name == "summarize":
-        return _run_summarize(args.get("topic", "general"))
+        return _run_summarize(args.get("topic", "general"), user_id=user_id)
     elif name == "flashcards":
-        return _run_flashcards(args.get("topic", "general"), args.get("num_cards", 5))
+        return _run_flashcards(args.get("topic", "general"), args.get("num_cards", 5), user_id=user_id)
     elif name == "stats":
-        return json.dumps(get_stats())
+        return json.dumps(get_stats(user_id=user_id))
     elif name == "clear":
-        return json.dumps(clear_database())
+        return json.dumps(clear_database(user_id=user_id))
     else:
         return json.dumps({"error": f"Unknown tool: {name}"})
 
 
-def _run_quiz(topic: str, num_questions: int = 3) -> str:
-    docs = _get_vectorstore().similarity_search(topic, k=6)
+def _run_quiz(topic: str, num_questions: int = 3, user_id: str = "anonymous") -> str:
+    search_kwargs = {"k": 6}
+    if user_id != "anonymous":
+        search_kwargs["filter"] = {"user_id": user_id}
+    docs = _get_vectorstore().similarity_search(topic, **search_kwargs)
     if not docs:
         return json.dumps({"error": "No notes found on this topic."})
 
@@ -137,8 +140,11 @@ Make questions test understanding, not just memorization."""}],
     })
 
 
-def _run_summarize(topic: str) -> str:
-    docs = _get_vectorstore().similarity_search(topic, k=8)
+def _run_summarize(topic: str, user_id: str = "anonymous") -> str:
+    search_kwargs = {"k": 8}
+    if user_id != "anonymous":
+        search_kwargs["filter"] = {"user_id": user_id}
+    docs = _get_vectorstore().similarity_search(topic, **search_kwargs)
     if not docs:
         return json.dumps({"error": "No notes found to summarize."})
 
@@ -163,8 +169,11 @@ SUMMARY:"""}],
     })
 
 
-def _run_flashcards(topic: str, num_cards: int = 5) -> str:
-    docs = _get_vectorstore().similarity_search(topic, k=6)
+def _run_flashcards(topic: str, num_cards: int = 5, user_id: str = "anonymous") -> str:
+    search_kwargs = {"k": 6}
+    if user_id != "anonymous":
+        search_kwargs["filter"] = {"user_id": user_id}
+    docs = _get_vectorstore().similarity_search(topic, **search_kwargs)
     if not docs:
         return json.dumps({"error": "No notes found for flashcards."})
 
@@ -209,12 +218,10 @@ def _detect_intent(message: str) -> tuple[str, dict]:
     return "ask", {"question": message}
 
 
-def agent_respond(user_message: str, history: list = None) -> dict:
-    """Main entry point. LLM decides which tool to use, executes it, returns final answer."""
-
+def agent_respond(user_message: str, history: list = None, user_id: str = "anonymous") -> dict:
     client = _get_client()
 
-    uploaded_files = _get_uploaded_sources()
+    uploaded_files = _get_uploaded_sources(user_id=user_id)
     files_info = f"Uploaded notes: {', '.join(uploaded_files)}" if uploaded_files else "No notes uploaded yet."
 
     messages = [
@@ -248,7 +255,7 @@ def agent_respond(user_message: str, history: list = None) -> dict:
             tool_name = tool_call.function.name
             tool_args = json.loads(tool_call.function.arguments)
 
-            tool_result = _run_tool(tool_name, tool_args)
+            tool_result = _run_tool(tool_name, tool_args, user_id=user_id)
             tool_data = json.loads(tool_result)
 
             return {
@@ -265,7 +272,7 @@ def agent_respond(user_message: str, history: list = None) -> dict:
 
     except Exception:
         tool_name, tool_args = _detect_intent(user_message)
-        tool_result = _run_tool(tool_name, tool_args)
+        tool_result = _run_tool(tool_name, tool_args, user_id=user_id)
         tool_data = json.loads(tool_result)
 
         return {
@@ -274,9 +281,12 @@ def agent_respond(user_message: str, history: list = None) -> dict:
             "tool_used": tool_name,
         }
 
-def _get_uploaded_sources():
+def _get_uploaded_sources(user_id: str = "anonymous"):
     collection = _get_vectorstore()._collection
-    result = collection.get(include=["metadatas"])
+    if user_id != "anonymous":
+        result = collection.get(where={"user_id": user_id}, include=["metadatas"])
+    else:
+        result = collection.get(include=["metadatas"])
     sources = set()
     for meta in result.get("metadatas", []):
         if meta and "source_file" in meta:
