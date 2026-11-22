@@ -34,9 +34,12 @@ An agentic RAG-powered study assistant. Upload your lecture PDFs, ask questions,
 - **Summarize** — organized revision notes from any chapter or topic
 - **Flashcards** — term and definition pairs for quick revision
 - **Explain Like a Kid** — adapts explanation style to how you ask
-- **Chat History** — agent remembers context within a conversation
+- **Google Sign-In** — Firebase Authentication with Google provider
+- **Chat History** — save, load, rename and delete past chats via Firestore
+- **Per-User Notes** — each user's PDFs are private (ChromaDB metadata filtering)
 - **Multi-PDF Support** — upload multiple PDFs, agent knows which files are loaded
 - **Source Citations** — every answer shows which parts of your notes it came from
+- **PDF Persistence** — ChromaDB backed up to a private HF dataset repo (survives Space restarts)
 
 ---
 
@@ -59,11 +62,13 @@ An agentic RAG-powered study assistant. Upload your lecture PDFs, ask questions,
 | Layer | Technology |
 |-------|-----------|
 | **Frontend** | React + Vite, Three.js (3D landing page) |
+| **Auth & Database** | Firebase Authentication (Google), Cloud Firestore |
 | **Backend API** | Flask (local dev), Gradio (HF Space) |
 | **Agentic Layer** | LLM tool calling with keyword fallback |
-| **RAG Pipeline** | LangChain, ChromaDB |
+| **RAG Pipeline** | LangChain, ChromaDB (per-user metadata filtering) |
 | **Embeddings** | all-MiniLM-L6-v2 (ONNX, CPU) |
 | **LLM** | Qwen 3.8 27B via Groq API |
+| **Data Persistence** | HF Dataset repo backup (ChromaDB) |
 | **Deployment** | Vercel (frontend), HF Spaces (backend, ZeroGPU) |
 
 ---
@@ -94,6 +99,8 @@ studybuddy-ai/
 │       ├── landing3d.js       # Three.js animated book character
 │       ├── Mascot.jsx         # SVG fallback mascot
 │       ├── api.js             # Gradio client + Flask API calls
+│       ├── firebase.js        # Firebase init (auth + Firestore)
+│       ├── history.js         # Firestore chat CRUD + real-time listener
 │       └── index.css
 ├── hf-space/                  # Deployed on HF Spaces
 │   ├── app.py                 # Gradio UI + API endpoints
@@ -135,6 +142,29 @@ Create `.env` inside `backend/`:
 GROQ_API_KEY=your_key_here
 ```
 
+### Firebase Setup (optional, for auth & chat history)
+
+1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
+2. Enable **Authentication** → Google provider
+3. Create a **Firestore Database** (test mode or with security rules)
+4. Register a web app and copy the config values
+
+Create `.env` inside `frontend/`:
+```
+VITE_FIREBASE_API_KEY=your_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_APP_ID=your_app_id
+```
+
+The app works without Firebase — sign-in and chat history are disabled gracefully.
+
+### HF Dataset Backup (optional, for PDF persistence)
+
+1. Create a **private** dataset repo on HuggingFace (e.g. `your-username/studybuddy-data`)
+2. Generate an **Access Token** with write permission (Settings → Access Tokens)
+3. Add `HF_TOKEN` to your HF Space's Secrets
+
 Start the server:
 ```bash
 python app.py
@@ -168,6 +198,9 @@ python run_eval.py
 - Deploying across Vercel (frontend) and HF Spaces (backend)
 - Retrieval evaluation methodology (recall measurement)
 - Prompt engineering to ground LLM responses in source documents
+- Firebase Authentication and Firestore for user management and chat persistence
+- Per-user metadata filtering in ChromaDB for data isolation
+- Backing up vector databases to HuggingFace dataset repos
 
 ---
 
