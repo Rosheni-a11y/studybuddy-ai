@@ -646,9 +646,9 @@
 }
 
 .toast-success {
-  border-color: #c7f0d4;
-  background: #ecfdf3;
-  color: #166534;
+  border-color: var(--brand-200);
+  background: var(--brand-50);
+  color: var(--brand-800);
 }
 
 .toast-error {
@@ -885,7 +885,7 @@
   font-size: 13px;
   line-height: 1.4;
 }
-.status-success { background: #ecfdf3; border: 1px solid #c7f0d4; color: #166534; }
+.status-success { background: var(--brand-50); border: 1px solid var(--brand-200); color: var(--brand-800); }
 .status-error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
 
 .file-list {
