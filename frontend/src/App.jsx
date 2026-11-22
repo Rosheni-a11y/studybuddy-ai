@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import Markdown from 'react-markdown'
 import './App.css'
 import { askQuestion, uploadPdf, getStats, clearNotes } from './api'
 import Mascot from './Mascot'
@@ -11,7 +12,7 @@ const SUGGESTIONS = [
   { label: 'Summarize key concepts', icon: 'sparkles' },
   { label: 'Create practice quiz', icon: 'quiz' },
   { label: 'Explain this topic', icon: 'lightbulb' },
-  { label: 'Compare concepts', icon: 'compare' },
+  { label: 'Make flashcards', icon: 'compare' },
 ]
 
 function Icon({ name, size = 18 }) {
@@ -198,7 +199,7 @@ function Message({ msg }) {
           {msg.error ? (
             <p className="bubble-error">{msg.content}</p>
           ) : (
-            <p>{msg.content}</p>
+            <Markdown>{msg.content}</Markdown>
           )}
         </div>
         {isAi && msg.sources && msg.sources.length > 0 && (
@@ -282,6 +283,7 @@ function StudyApp({ onHome }) {
   const [dragging, setDragging] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
   const [toast, setToast] = useState(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const [user, setUser] = useState(null)
   const [chats, setChats] = useState([])
   const [chatId, setChatId] = useState(null)
@@ -463,8 +465,10 @@ function StudyApp({ onHome }) {
     uploadFile(e.dataTransfer.files?.[0])
   }
 
-  const handleClear = async () => {
-    if (!window.confirm('Delete all uploaded notes? This cannot be undone.')) return
+  const handleClear = () => setConfirmOpen(true)
+
+  const doClear = async () => {
+    setConfirmOpen(false)
     try {
       const text = await clearNotes()
       setFiles([])
@@ -497,20 +501,21 @@ function StudyApp({ onHome }) {
             </div>
           </div>
 
-          <button type="button" className="home-btn" onClick={onHome}>
-            ← Home
-          </button>
-
-          {firebaseOn &&
-            (user ? (
-              <button type="button" className="home-btn" onClick={() => signOut(auth)} title={user.email}>
-                Sign out
-              </button>
-            ) : (
-              <button type="button" className="home-btn" onClick={signIn}>
-                Sign in with Google
-              </button>
-            ))}
+          <div className="header-right">
+            <button type="button" className="home-btn" onClick={onHome}>
+              ← Home
+            </button>
+            {firebaseOn &&
+              (user ? (
+                <button type="button" className="home-btn" onClick={() => signOut(auth)} title={user.email}>
+                  Sign out
+                </button>
+              ) : (
+                <button type="button" className="home-btn" onClick={signIn}>
+                  Sign in with Google
+                </button>
+              ))}
+          </div>
 
           <button
             type="button"
@@ -743,9 +748,20 @@ function StudyApp({ onHome }) {
         </section>
       </div>
 
+      {confirmOpen && (
+        <div className="confirm-overlay" onClick={() => setConfirmOpen(false)}>
+          <div className="confirm-box" onClick={(e) => e.stopPropagation()}>
+            <p>Are you sure you want to delete all uploaded notes? This action cannot be undone.</p>
+            <div className="confirm-actions">
+              <button type="button" className="ghost-btn" onClick={() => setConfirmOpen(false)}>Cancel</button>
+              <button type="button" className="ghost-btn ghost-danger" onClick={doClear}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {toast && (
         <div className={`toast toast-${toast.kind}`} role="status">
-          <Icon name={toast.kind === 'success' ? 'check' : 'file'} size={16} />
           <span>{toast.text}</span>
         </div>
       )}

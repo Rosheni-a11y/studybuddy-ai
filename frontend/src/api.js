@@ -56,7 +56,7 @@ export async function uploadPdf(file) {
 
   const app = await getClient()
   const result = await app.predict('/upload_fn', { file })
-  const message = String(result.data[1] ?? 'Uploaded')
+  const message = String(result.data[1] ?? 'Uploaded').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim()
   const m = message.match(/(\d+)\s*pages?\s*->\s*(\d+)\s*chunks?/i)
   return {
     message,
@@ -87,5 +87,5 @@ export async function clearNotes() {
   }
   const app = await getClient()
   const result = await app.predict('/clear_fn', {})
-  return String(result.data[1] ?? 'Cleared')
+  return String(result.data[1] ?? 'Cleared').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim()
 }
