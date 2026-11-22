@@ -14,6 +14,8 @@ An agentic RAG-powered study assistant. Upload your lecture PDFs, ask questions,
 
 <img width="1907" height="874" alt="image" src="https://github.com/user-attachments/assets/6dcb8d99-282d-4c70-b427-ab0bfabde5eb" />
 
+
+
 <img width="1902" height="879" alt="image" src="https://github.com/user-attachments/assets/78ad5d18-07e5-4265-bcb2-d69575b16fdc" />
 
 
@@ -23,12 +25,15 @@ An agentic RAG-powered study assistant. Upload your lecture PDFs, ask questions,
 <img width="1903" height="869" alt="image" src="https://github.com/user-attachments/assets/feeca2fc-8d03-46b9-bd4c-9235508385ae" />
 
 
+
 ### Chat with Notes
+
 
 <img width="1899" height="865" alt="image" src="https://github.com/user-attachments/assets/737c24d1-03fd-4a51-9508-c2c93b48dbf5" />
 
 
 ### Upload & Database
+
 
 <img width="1912" height="863" alt="image" src="https://github.com/user-attachments/assets/25579bdd-168b-4559-a068-74f05e49fb2b" />
 
